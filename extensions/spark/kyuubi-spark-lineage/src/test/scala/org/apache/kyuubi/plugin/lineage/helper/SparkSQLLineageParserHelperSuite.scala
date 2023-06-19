@@ -94,6 +94,53 @@ class SparkSQLLineageParserHelperSuite extends KyuubiFunSuite
     }
   }
 
+  test("table lineage extract - left [semi] join") {
+    val ddls =
+      """
+        |create table v2_catalog.db.target_t(id int, name string, price float)
+        |create table v2_catalog.db.source_t1(id int, name string, price float)
+        |create table v2_catalog.db.source_t2(id int, name string, price float, price2 float)
+        |""".stripMargin
+    ddls.split("\n").filter(_.nonEmpty).foreach(spark.sql(_).collect())
+    withTable("v2_catalog.db.target_t", "v2_catalog.db.source_t") { _ =>
+      val ret0 = exectractLineage(
+        """
+          |INSERT OVERWRITE TABLE v2_catalog.db.target_t
+          |select a.id,a.name,a.price
+          |from v2_catalog.db.source_t1 a
+          |left semi join v2_catalog.db.source_t2 b
+          |on a.id = b.id
+          |
+          |""".stripMargin)
+      assert(ret0 == ret0)
+    }
+  }
+
+  test("table lineage extract - view join view") {
+    val ddls =
+      """
+        |create table v2_catalog.db.target_t(id int, name string, price float)
+        |create table v2_catalog.db.source_t1(id int, name string, price float)
+        |create table v2_catalog.db.source_t2(id int, name string, price float, price2 float)
+        |CREATE TEMPORARY VIEW source_t1_v(id,name,price) as select id,name,price from v2_catalog.db.source_t1
+        |CREATE TEMPORARY VIEW source_t2_v(id,name,price,price2) as select id,name,price,price2 from v2_catalog.db.source_t2
+        |""".stripMargin
+    ddls.split("\n").filter(_.nonEmpty).foreach(spark.sql(_).collect())
+    withTable("v2_catalog.db.target_t", "v2_catalog.db.source_t") { _ =>
+      val ret0 = exectractLineage(
+        """
+          |INSERT OVERWRITE TABLE v2_catalog.db.target_t
+          |select a.id,a.name,a.price
+          |from source_t1_v a
+          |left join source_t2_v b
+          |on a.id = b.id
+          |
+          |""".stripMargin)
+      assert(ret0 == ret0)
+    }
+
+  }
+
   test("columns lineage extract - DataSourceV2Relation") {
     val ddls =
       """

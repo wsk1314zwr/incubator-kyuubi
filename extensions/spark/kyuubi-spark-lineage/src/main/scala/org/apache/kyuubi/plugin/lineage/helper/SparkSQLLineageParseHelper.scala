@@ -28,7 +28,6 @@ import org.apache.spark.sql.catalyst.analysis.{NamedRelation, PersistedView, Vie
 import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable, HiveTableRelation}
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, AttributeSet, Expression, InSubquery, NamedExpression, Not, SubqueryExpression}
 import org.apache.spark.sql.catalyst.expressions.aggregate.Count
-import org.apache.spark.sql.catalyst.plans.{LeftAnti, LeftSemi}
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.connector.catalog.{CatalogPlugin, Identifier, TableCatalog}
 import org.apache.spark.sql.execution.SparkPlan
@@ -199,7 +198,9 @@ trait LineageParser {
           (acc + (attr -> x.head._2), x.tail)
       }._1
     }
-    joinColumnsLineage(parentColumnsLineage, mergedRelationColumnLineage)
+    val add = relationColumnLineage.filter(_._1.name.equalsIgnoreCase(ADDITIONAL_COLUMN_IDENTIFIER))
+    val allMergedRelationColumnLineage = mergeColumnsLineage(mergedRelationColumnLineage, add)
+    joinColumnsLineage(parentColumnsLineage, allMergedRelationColumnLineage)
   }
 
   private def extractExpressionColumnLine(
@@ -450,31 +451,33 @@ trait LineageParser {
 
       case p: Join =>
         p.joinType match {
-          case LeftSemi | LeftAnti =>
-            extractColumnsLineage(p.left, parentColumnsLineage)
+//          case LeftSemi | LeftAnti =>
+//            extractColumnsLineage(p.left, parentColumnsLineage)
           case _ =>
             p.children.map(extractColumnsLineage(_, parentColumnsLineage))
               .reduce(mergeColumnsLineage)
         }
 
       case p: Union =>
+        val childrenLineages = p.children
+                .map(extractColumnsLineage(_, ListMap[Attribute, AttributeSet]()))
         val childrenColumnsLineage =
-          // support for the multi-insert statement
+        // support for the multi-insert statement
           if (p.output.isEmpty) {
-            p.children
-              .map(extractColumnsLineage(_, ListMap[Attribute, AttributeSet]()))
-              .reduce(mergeColumnsLineage)
+            childrenLineages.reduce(mergeColumnsLineage)
           } else {
             // merge all children in to one derivedColumns
-            val childrenUnion =
-              p.children.map(extractColumnsLineage(_, ListMap[Attribute, AttributeSet]())).map(
-                _.values).reduce {
-                (left, right) =>
-                  left.zip(right).map(attr => attr._1 ++ attr._2)
-              }
+            val childrenUnion = childrenLineages.map(
+              _.values).reduce {
+              (left, right) =>
+                left.zip(right).map(attr => attr._1 ++ attr._2)
+            }
             ListMap(p.output.zip(childrenUnion): _*)
           }
-        joinColumnsLineage(parentColumnsLineage, childrenColumnsLineage)
+        val add = childrenLineages.reduce(mergeColumnsLineage)
+                .filter(_._1.name.equalsIgnoreCase(ADDITIONAL_COLUMN_IDENTIFIER))
+        val allMergedRelationColumnLineage = mergeColumnsLineage(childrenColumnsLineage, add)
+        joinColumnsLineage(parentColumnsLineage, allMergedRelationColumnLineage)
 
       case p: LogicalRelation if p.catalogTable.nonEmpty =>
         val tableName = p.catalogTable.get.qualifiedName
