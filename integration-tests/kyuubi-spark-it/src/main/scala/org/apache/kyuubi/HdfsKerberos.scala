@@ -19,7 +19,8 @@ package org.apache.kyuubi
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.security.UserGroupInformation
-
+// 关闭代码风格检查
+// scalastyle:off
 object HdfsKerberos {
 
     /**
@@ -33,9 +34,9 @@ object HdfsKerberos {
         // 有这两个文件后可不需要HADOOP_HOME以及HADOOP_CONF_DIR的配置
         conf.addResource(new Path("/opt/env/core-site.xml"))
         conf.addResource(new Path("/opt/env/hdfs-site.xml"))
-        // 访问hdfs代码
+//    访问hdfs代码
         val fs = FileSystem.get(conf)
-        fs.globStatus(new Path("/spark/spark3/jars/*")).map(x => {
+        fs.globStatus(new Path("/spark/spark3/jars/*")).foreach(x => {
             println(x.getPath)
         })
     }

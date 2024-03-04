@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
 
-
+// scalastyle:off
 object SparkHiveRemoteExample2 extends Logging {
 
 
@@ -47,15 +47,17 @@ object SparkHiveRemoteExample2 extends Logging {
                  * 3)将血缘事件监听的插件放入spark的cp
                  */
                 .config("spark.sql.queryExecutionListeners"
-                    , "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
+                    , "org.apache.kyuubi.plugin.lineage2.SparkOperationLineageQueryExecutionListener")
                 .getOrCreate()
         logInfo("这里是测试111")
 //      测试1: 测试 join、where输入表级别血缘丢失问题
 //      test1(spark)
 //      测试2: 测试view输入表级别血缘丢失问题
 //        test2(spark)
-//      测试2: 更多测试view输入表级别血缘丢失问题
-        test3(spark)
+//      测试3: 更多测试view输入表级别血缘丢失问题
+//        test3(spark)
+//      测试4:视图中带in子查询，血缘测试
+        test4(spark)
         spark.stop()
 
     }
@@ -155,6 +157,71 @@ object SparkHiveRemoteExample2 extends Logging {
                   |) g
                   |
                   |""".stripMargin).show(false)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => logError("发生异常", e)
+        }
+    }
+
+    def test4(spark: SparkSession): Unit = {
+        // 测试37：视图中带in子查询，血缘测试
+        try {
+            spark.sql(
+                """
+                  |
+                  |CREATE TEMPORARY view gov_compute_three_day_error as
+                  |SELECT
+                  |    task_id,
+                  |    project_code,
+                  |    collect_date,
+                  |    collect_month,
+                  |    all_count,
+                  |    error_count,
+                  |    three_day_error_count,
+                  |    number
+                  |from (
+                  |    SELECT
+                  |        task_id,
+                  |        project_code,
+                  |        collect_date,
+                  |        substr(collect_date,1,7) collect_month,
+                  |        all_count,
+                  |        error_count,
+                  |        sum(case when  error_count > 0 then 1 else 0 end  ) OVER(partition by task_id,substr(collect_date,1,7) ORDER BY collect_date ASC  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) three_day_error_count,
+                  |        row_number() OVER(partition by task_id,substr(collect_date,1,7) ORDER BY collect_date ASC ) number
+                  |    from (
+                  |        SELECT
+                  |            task_id,
+                  |            max(project_code) as project_code,
+                  |            substr(schedule_time,1,10) as collect_date,
+                  |            count(1) as  all_count,
+                  |            sum(case when state = 6 then 1 else 0 end ) as  error_count
+                  |        from (
+                  |                (select  ts.* from datark_dev.task_schedule_instance ts
+                  |                    where ts.instance_type=0 and ts.task_type in ('SQL', 'BATCH_SYNC', 'SPARK_SQL')  and ts.pt_d = '2024-02-18' and ts.task_id in (select task_id from datark_dev.task_schedule where pt_d = '2024-02-18' and task_period = 2)
+                  |                ) a
+                  |                inner join (select schedule_time,id from datark_dev.task_process_instance where pt_d = '2024-02-18') b on a.process_instance_id = b.id
+                  |            ) c group  by task_id,substr(schedule_time,1,10))
+                  |) a where a.error_count > 0
+                  |
+                  |""".stripMargin)
+
+            val df = spark.sql(
+                """
+                  |
+                  |SELECT
+                  |        task_id,
+                  |        project_code,
+                  |        3 as type,
+                  |        to_json(named_struct('collectDate', collect_date, 'errorCount', error_count,
+                  |            'allCount',all_count)) as detail_jsonl,
+                  |        collect_month
+                  |    from gov_compute_three_day_error t
+                  |-- LEFT SEMI JOIN
+                  |--    (SELECT * from gov_compute_three_day_error WHERE three_day_error_count = 3) f on t.task_id = f.task_id and t.collect_month = f.collect_month and  t.number>f.number-3 and t.number<=f.number  where  t.task_id not in (SELECT task_id from `datark_dev`.`gov_compute_white_list` WHERE type = 3 );
+                  |
+                  |""".stripMargin)
+            df.show()
             Thread.sleep(5000)
         } catch {
             case e: Exception => logError("发生异常", e)
