@@ -213,6 +213,10 @@ trait LineageParser {
       case expr: SubqueryExpression =>
         expr.plan.children.map(
           extractColumnsLineage(_, parentColumnsLineage)).reduce(mergeColumnsLineage)
+      case expr: org.apache.spark.sql.catalyst.expressions.BinaryOperator =>
+        val left = extractExpressionColumnLine(expr.left, parentColumnsLineage)
+        val right = extractExpressionColumnLine(expr.right, parentColumnsLineage)
+        mergeColumnsLineage(left, right)
       case expr: Not =>
         extractExpressionColumnLine(expr.child, parentColumnsLineage)
       case _ =>
