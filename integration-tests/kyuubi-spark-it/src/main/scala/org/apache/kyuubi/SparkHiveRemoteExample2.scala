@@ -61,7 +61,9 @@ object SparkHiveRemoteExample2 extends Logging {
         // 测试5:普通查询带in子查询，血缘测试
 //        test5(spark)
         // 测试6：not exists(select 1..) 表级别
-        test6(spark)
+//        test6(spark)
+        // 测试7：/(select 1..)>  的表级别级别
+        test7(spark)
         spark.stop()
 
     }
@@ -259,6 +261,25 @@ object SparkHiveRemoteExample2 extends Logging {
                   |                    where   ts.instance_type=0
                   |                               and ts.task_type in ('SQL', 'BATCH_SYNC', 'SPARK_SQL')
                   |                               and ts.pt_d = '2024-02-18' and not exists (select 1 from datark_dev.task_schedule where pt_d = '2024-02-18' and task_period = 2 limit 1)
+                  |
+                  |
+                  |""".stripMargin).show()
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => logError("发生异常", e)
+        }
+    }
+
+    def test7(spark: SparkSession): Unit = {
+        // 测试7：/(select 1..)>  的表级别级别
+        try {
+            spark.sql(
+                """
+                  |
+                  |select  ts.* from datark_dev.task_schedule_instance ts
+                  |                    where   ts.instance_type=0
+                  |                               and ts.task_type in ('SQL', 'BATCH_SYNC', 'SPARK_SQL')
+                  |                               and ts.pt_d = '2024-02-18' and ts.task_id/(select task_id from datark_dev.task_schedule where pt_d = '2024-02-18' and task_period = 2 limit 1) > 1
                   |
                   |
                   |""".stripMargin).show()

@@ -219,6 +219,8 @@ trait LineageParser {
         mergeColumnsLineage(left, right)
       case expr: Not =>
         extractExpressionColumnLine(expr.child, parentColumnsLineage)
+      case expr: org.apache.spark.sql.catalyst.expressions.Cast =>
+        extractExpressionColumnLine(expr.child, parentColumnsLineage)
       case _ =>
         ListMap.empty[Attribute, AttributeSet]
     }
