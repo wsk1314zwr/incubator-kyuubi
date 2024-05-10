@@ -34,7 +34,7 @@ object SparkHiveRemoteExample2 extends Logging {
         val spark = SparkSession
                 .builder()
                 .master("local[2]")
-                .appName("Spark Hive Example")
+                .appName("Spark Hive  Example")
                 .config("spark.sql.hive.metastore.version", "1.1.0")
                 .config("spark.sql.hive.metastore.jars", "path")
                 .config("spark.sql.hive.metastore.jars.path"
