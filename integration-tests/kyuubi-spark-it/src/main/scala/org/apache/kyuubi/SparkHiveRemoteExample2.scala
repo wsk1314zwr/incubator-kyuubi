@@ -63,7 +63,9 @@ object SparkHiveRemoteExample2 extends Logging {
         // 测试6：not exists(select 1..) 表级别
 //        test6(spark)
         // 测试7：/(select 1..)>  的表级别级别
-        test7(spark)
+        //test7(spark)
+        // 测试8：测试注释最后一行是\结尾
+        test8(spark)
         spark.stop()
 
     }
@@ -280,6 +282,23 @@ object SparkHiveRemoteExample2 extends Logging {
                   |                    where   ts.instance_type=0
                   |                               and ts.task_type in ('SQL', 'BATCH_SYNC', 'SPARK_SQL')
                   |                               and ts.pt_d = '2024-02-18' and ts.task_id/(select task_id from datark_dev.task_schedule where pt_d = '2024-02-18' and task_period = 2 limit 1) > 1
+                  |
+                  |
+                  |""".stripMargin).show()
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => logError("发生异常", e)
+        }
+    }
+
+    def test8(spark: SparkSession): Unit = {
+        // 测试8：测试注释最后一行是\结尾, 结论：\是续行符，导致认为下一行也是注释，深坑
+        try {
+            spark.sql(
+                """
+                  |select  ts.* from datark_dev.task_schedule_instance ts
+                  |                    where   ts.instance_type=0  --wsk test\
+                  |                               and ts.task_type in ('SQL', 'BATCH_SYNC', 'SPARK_SQL')
                   |
                   |
                   |""".stripMargin).show()
