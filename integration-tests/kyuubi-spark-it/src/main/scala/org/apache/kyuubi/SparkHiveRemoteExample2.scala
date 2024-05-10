@@ -41,7 +41,7 @@ object SparkHiveRemoteExample2 extends Logging {
                     , "file:///opt/cloudera/parcels/CDH-5.16.1-1.cdh5.16.1.p0.3/lib/hive/lib/*")
                 .enableHiveSupport()
                 /**
-                 * spark 血缘分析测试
+                 * spark  血缘分析测试
                  * 1)开启如下三个配置
                  * 2)将血缘解析插件放入spark的cp
                  * 3)将血缘事件监听的插件放入spark的cp
