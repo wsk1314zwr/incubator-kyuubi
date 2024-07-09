@@ -28,7 +28,8 @@ case class ColumnLineage(column: String, originalColumns: Set[String])
 class Lineage(
     val inputTables: List[String],
     val outputTables: List[String],
-    val columnLineage: List[ColumnLineage]) {
+    val columnLineage: List[ColumnLineage],
+    val taskId: java.lang.Long = -1) {
 
   override def equals(other: Any): Boolean = other match {
     case otherLineage: Lineage =>
@@ -40,6 +41,7 @@ class Lineage(
   override def hashCode(): Int = super.hashCode()
 
   override def toString: String = {
+    s"taskId($taskId)\n" +
     s"inputTables($inputTables)\n" +
       s"outputTables($outputTables)\n" +
       s"columnLineage($columnLineage)"
@@ -50,11 +52,12 @@ object Lineage {
   def apply(
       inputTables: List[String],
       outputTables: List[String],
-      columnLineage: List[(String, Set[String])]): Lineage = {
+      columnLineage: List[(String, Set[String])],
+      taskId: java.lang.Long = -1): Lineage = {
     val newColumnLineage = columnLineage.map {
       case (column, originalColumns) =>
         ColumnLineage(column, originalColumns)
     }
-    new Lineage(inputTables, outputTables, newColumnLineage)
+    new Lineage(inputTables, outputTables, newColumnLineage, taskId)
   }
 }

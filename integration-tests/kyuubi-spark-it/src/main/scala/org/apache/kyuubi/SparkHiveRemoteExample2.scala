@@ -48,6 +48,8 @@ object SparkHiveRemoteExample2 extends Logging {
                  */
                 .config("spark.sql.queryExecutionListeners"
                     , "org.apache.kyuubi.plugin.lineage2.SparkOperationLineageQueryExecutionListener")
+                .config("spark.datark.security.authorization.query.task.id"
+                    , "999")
                 .getOrCreate()
         logInfo("这里是测试111")
 //      测试1: 测试 join、where输入表级别血缘丢失问题

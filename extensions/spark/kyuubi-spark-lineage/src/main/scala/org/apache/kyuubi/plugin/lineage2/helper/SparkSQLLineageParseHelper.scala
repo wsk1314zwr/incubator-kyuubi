@@ -67,7 +67,9 @@ trait LineageParser {
       outputTables.distinct,
       columnsLineage.filterNot {
         case (name, _) => name.endsWith(ADDITIONAL_COLUMN_IDENTIFIER)
-      })
+      },
+      java.lang.Long.parseLong(sparkSession.conf.get(
+        "spark.datark.security.authorization.query.task.id", "-1")))
   }
 
   private def mergeColumnsLineage(
