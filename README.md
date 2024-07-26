@@ -144,3 +144,10 @@ The project took its name from a character of a popular Japanese manga - `Naruto
 The character is named `Kyuubi Kitsune/Kurama`, which is a nine-tailed fox in mythology.
 `Kyuubi` spread the power and spirit of fire, which is used here to represent the powerful [Apache Spark](http://spark.apache.org).
 Its nine tails stand for end-to-end multi-tenancy support of this project.
+
+## Datark血缘解析插件编译打包
+* git地址: git@gitlab.dc.servyou-it.com:bdps/incubator-kyuubi.git
+* 切换分支: master-lineage-20230419是平台开发人员在20230419日复制的master主枝，因为血缘最新更新代码只有master分支有，故直接从主枝复制一个分支，此时的主枝是正在开发的kyuubi1.8版本
+* 编译环境: jdk1.8 ,maven3.6.3 ,scala2.12
+* 编译命令: **build/mvn clean package -T 16 -pl :kyuubi-spark-lineage_2.12 -am -Dspark.version=3.1.2 -DskipTests -Dmaven.test.skip=true**
+* 插件包位置: incubator-kyuubi/extensions/spark/kyuubi-spark-lineage/target/kyuubi-spark-lineage_2.12-1.8.0-SNAPSHOT.jar
