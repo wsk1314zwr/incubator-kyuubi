@@ -4,13 +4,16 @@
     <parent>
         <groupId>org.apache.kyuubi</groupId>
         <artifactId>integration-tests</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>1.8.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>kyuubi-spark-it</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <spark.version>3.1.2</spark.version>
+    </properties>
     <name>Kyuubi Spark It</name>
     <url>https://kyuubi.apache.org/</url>
 
@@ -18,7 +21,7 @@
         <dependency>
             <groupId>org.apache.kyuubi</groupId>
             <artifactId>kyuubi-spark-lineage_${scala.binary.version}</artifactId>
-            <version>1.8.0-SNAPSHOT</version>
+            <version>1.8.0</version>
         </dependency>
         <!--添加scala依赖-->
         <dependency>
@@ -26,12 +29,12 @@
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
         </dependency>
-        <!--添加spark core 依赖-->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.12</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
+        <!--添加spark core 依赖，此依赖不能放开，否则spark3.4.3控制台就没有日志了 -->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.spark</groupId>-->
+<!--            <artifactId>spark-core_2.12</artifactId>-->
+<!--            <version>${spark.version}</version>-->
+<!--        </dependency>-->
         <!--添加hadoop 客户端的依赖-->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
