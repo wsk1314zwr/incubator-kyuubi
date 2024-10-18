@@ -146,7 +146,7 @@ The character is named `Kyuubi Kitsune/Kurama`, which is a nine-tailed fox in my
 Its nine tails stand for end-to-end multi-tenancy support of this project.
 
 ## Datark血缘解析插件编译打包
-血缘插件的代码在spark3.1和spark3.4都适配，注意：若idea想不同spark环境测试血缘插件，请在根pom.xml文件<spark.version>指定相关的spark版本，然后重新依赖即可测试。
+血缘插件的模块代码在spark3.1和spark3.4都适配，注意：若本机idea想不同spark环境测试血缘插件，请在根pom.xml文件<spark.version>指定相关的spark版本，然后重新刷新依赖即可测试。
 * git地址: git@gitlab.dc.servyou-it.com:bdps/incubator-kyuubi.git
 * 切换分支: master-lineage-20230419是平台开发人员在20230419日复制的master主枝，因为血缘最新更新代码只有master分支有，故直接从主枝复制一个分支，此时的主枝是正在开发的kyuubi1.8版本
 * 编译环境: jdk1.8 ,maven3.8.8 ,scala2.12
