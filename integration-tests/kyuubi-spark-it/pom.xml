@@ -11,9 +11,6 @@
     <artifactId>kyuubi-spark-it</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <spark.version>3.1.2</spark.version>
-    </properties>
     <name>Kyuubi Spark It</name>
     <url>https://kyuubi.apache.org/</url>
 
