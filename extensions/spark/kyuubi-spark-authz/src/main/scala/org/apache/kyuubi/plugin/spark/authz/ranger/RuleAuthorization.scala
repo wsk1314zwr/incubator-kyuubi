@@ -47,7 +47,7 @@ case class RuleAuthorization(spark: SparkSession) extends Authorization(spark) {
         val accessType = ranger.AccessType(obj, opType, isInput)
         if (accessType != AccessType.NONE && !requestsSet.contains((resource, accessType))) {
           requests += AccessRequest(resource, ugi, opType, accessType)
-          requestsSet.add(resource, accessType)
+          requestsSet.add((resource, accessType))
         }
       }
     }

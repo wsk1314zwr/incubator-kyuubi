@@ -19,11 +19,8 @@ package org.apache.kyuubi.plugin.spark.authz.ranger
 
 import java.io.File
 import java.util
-
 import scala.language.implicitConversions
-
 import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl
-
 import org.apache.kyuubi.plugin.spark.authz.{ObjectType, PrivilegeObject}
 import org.apache.kyuubi.plugin.spark.authz.ObjectType._
 import org.apache.kyuubi.plugin.spark.authz.OperationType.OperationType
@@ -38,6 +35,7 @@ class AccessResource private (val objectType: ObjectType, val catalog: Option[St
     val columnStr = getColumn
     if (columnStr == null) Nil else columnStr.split(",").filter(_.nonEmpty)
   }
+  def getObjectType: ObjectType = objectType
 }
 
 object AccessResource {
