@@ -17,15 +17,17 @@
 
 package org.apache.kyuubi.plugin.spark.authz.ranger
 
+import java.util.Locale
 import scala.collection.JavaConverters._
 import scala.collection.mutable.{ArrayBuffer, LinkedHashMap}
-
 import org.apache.hadoop.util.ShutdownHookManager
 import org.apache.ranger.plugin.policyengine.RangerAccessRequest
 import org.apache.ranger.plugin.service.RangerBasePlugin
 import org.slf4j.LoggerFactory
-
 import org.apache.kyuubi.plugin.spark.authz.AccessControlException
+import org.apache.kyuubi.plugin.spark.authz.OperationType.OperationType
+import org.apache.kyuubi.plugin.spark.authz.security.{DatarkSparkAccessRequest, DatarkSparkAuthentication}
+import org.apache.spark.sql.SparkSession
 
 object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
   with RangerConfigProvider {
@@ -170,5 +172,32 @@ object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
         }
       }
     }
+  }
+
+  def isAllowed2(spark: SparkSession, resource: AccessResource, opType: OperationType): Boolean = {
+    val (userName, datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode, _) = getConfig(spark)
+    val request =
+      new DatarkSparkAccessRequest(resource, userName, opType.toString, AccessType.USE.toString.toLowerCase(Locale.ROOT),
+        datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode)
+    DatarkSparkAuthentication.isAccessAllowed(request, false)
+  }
+
+
+  def getConfig(spark: SparkSession): (String, String, String, Int, String, String, String, String, String) = {
+    val scConfig = spark.sparkContext.getConf
+    val userName = scConfig.get("spark.datark.security.authorization.user")
+    val datarkUrl = scConfig.get("spark.datark.security.authorization.url")
+    //权限校验业务方appcode,用于通过open api的权限校验
+    val appCode = scConfig.get("spark.datark.security.authorization.appcode")
+    val expireTime = Integer.parseInt(spark.conf.get("spark.datark.security.authorization.cache.expireAfterWrite", "10"))
+    val auditEnable = scConfig.get("spark.datark.security.authorization.audit.enable", "true")
+    //0:临时查询SQL 1:节点交互式查询SQL 2:测试实例SQL 3:周期实例SQL 4:补数据实例SQL
+    val datarkQueryType = spark.conf.get("spark.datark.security.authorization.query.type", "null")
+    val datarkTaskId = spark.conf.get("spark.datark.security.authorization.query.task.id", "null")
+    //任务运行所在的项目空间
+    val projectCode = spark.conf.get("spark.datark.security.authorization.query.appcode", "null")
+    //权限校验不过是否抛出异常
+    val throwableException = spark.conf.get("spark.datark.security.authorization.query.appcode", "true")
+    (userName, datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode, throwableException)
   }
 }

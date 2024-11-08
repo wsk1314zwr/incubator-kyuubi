@@ -17,15 +17,14 @@
 package org.apache.kyuubi.plugin.spark.authz.rule.rowfilter
 
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.spark.SparkContext
+import org.apache.kyuubi.plugin.spark.authz.ranger.{AccessResource, SparkRangerAdminPlugin}
+import org.apache.kyuubi.plugin.spark.authz.util.AuthZUtils
+import org.apache.kyuubi.plugin.spark.authz.{ObjectType, OperationType}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.execution.{LeafExecNode, SparkPlan}
-
-import org.apache.kyuubi.plugin.spark.authz.{ObjectType, OperationType}
-import org.apache.kyuubi.plugin.spark.authz.ranger.{AccessRequest, AccessResource, AccessType, SparkRangerAdminPlugin}
-import org.apache.kyuubi.plugin.spark.authz.util.AuthZUtils
 
 trait FilteredShowObjectsExec extends LeafExecNode {
   def result: Array[InternalRow]
@@ -38,44 +37,40 @@ trait FilteredShowObjectsExec extends LeafExecNode {
 }
 
 trait FilteredShowObjectsCheck {
-  def isAllowed(r: InternalRow, ugi: UserGroupInformation): Boolean
+  def isAllowed(r: InternalRow, ugi: UserGroupInformation, sparkSession: SparkSession): Boolean
 }
 
 case class FilteredShowNamespaceExec(result: Array[InternalRow], output: Seq[Attribute])
   extends FilteredShowObjectsExec {}
 object FilteredShowNamespaceExec extends FilteredShowObjectsCheck {
-  def apply(delegated: SparkPlan, sc: SparkContext): FilteredShowNamespaceExec = {
+  def apply(delegated: SparkPlan, sc: SparkSession): FilteredShowNamespaceExec = {
     val result = delegated.executeCollect()
-      .filter(isAllowed(_, AuthZUtils.getAuthzUgi(sc)))
+      .filter(isAllowed(_, AuthZUtils.getAuthzUgi(sc.sparkContext),sc))
     new FilteredShowNamespaceExec(result, delegated.output)
   }
 
-  override def isAllowed(r: InternalRow, ugi: UserGroupInformation): Boolean = {
+  override def isAllowed(r: InternalRow, ugi: UserGroupInformation, sparkSession: SparkSession): Boolean = {
     val database = r.getString(0)
     val resource = AccessResource(ObjectType.DATABASE, database, null, null)
-    val request = AccessRequest(resource, ugi, OperationType.SHOWDATABASES, AccessType.USE)
-    val result = SparkRangerAdminPlugin.isAccessAllowed(request)
-    result != null && result.getIsAllowed
+    SparkRangerAdminPlugin.isAllowed2(sparkSession, resource, OperationType.SHOWDATABASES)
   }
 }
 
 case class FilteredShowTablesExec(result: Array[InternalRow], output: Seq[Attribute])
   extends FilteredShowObjectsExec {}
 object FilteredShowTablesExec extends FilteredShowObjectsCheck {
-  def apply(delegated: SparkPlan, sc: SparkContext): FilteredShowNamespaceExec = {
+  def apply(delegated: SparkPlan, sc: SparkSession): FilteredShowNamespaceExec = {
     val result = delegated.executeCollect()
-      .filter(isAllowed(_, AuthZUtils.getAuthzUgi(sc)))
+      .filter(isAllowed(_, AuthZUtils.getAuthzUgi(sc.sparkContext),sc))
     new FilteredShowNamespaceExec(result, delegated.output)
   }
 
-  override def isAllowed(r: InternalRow, ugi: UserGroupInformation): Boolean = {
+  override def isAllowed(r: InternalRow, ugi: UserGroupInformation, sparkSession: SparkSession): Boolean = {
     val database = r.getString(0)
     val table = r.getString(1)
     val isTemp = r.getBoolean(2)
     val objectType = if (isTemp) ObjectType.VIEW else ObjectType.TABLE
     val resource = AccessResource(objectType, database, table, null)
-    val request = AccessRequest(resource, ugi, OperationType.SHOWTABLES, AccessType.USE)
-    val result = SparkRangerAdminPlugin.isAccessAllowed(request)
-    result != null && result.getIsAllowed
+    SparkRangerAdminPlugin.isAllowed2(sparkSession, resource, OperationType.SHOWTABLES)
   }
 }

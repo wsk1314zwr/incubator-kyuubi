@@ -31,12 +31,14 @@ abstract class Authorization(spark: SparkSession) extends Rule[LogicalPlan] {
     plan match {
       case plan if isAuthChecked(plan) => plan // do nothing if checked privileges already.
       case p =>
-        checkPrivileges(spark, p)
+        checkPrivileges2(spark, p)
         markAuthChecked(p)
     }
   }
 
   def checkPrivileges(spark: SparkSession, plan: LogicalPlan): Unit
+
+  def checkPrivileges2(spark: SparkSession, plan: LogicalPlan): Unit
 }
 
 object Authorization {

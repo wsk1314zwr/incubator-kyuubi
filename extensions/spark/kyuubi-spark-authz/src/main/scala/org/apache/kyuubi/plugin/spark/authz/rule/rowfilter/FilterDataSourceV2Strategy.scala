@@ -26,16 +26,16 @@ case class FilterDataSourceV2Strategy(spark: SparkSession) extends Strategy {
     // `Project`
     case ObjectFilterPlaceHolder(Project(_, child)) if child.nodeName == "ShowNamespaces" =>
       spark.sessionState.planner.plan(child)
-        .map(FilteredShowNamespaceExec(_, spark.sparkContext)).toSeq
+        .map(FilteredShowNamespaceExec(_, spark)).toSeq
 
     // For Spark 3.2 and above
     case ObjectFilterPlaceHolder(child) if child.nodeName == "ShowNamespaces" =>
       spark.sessionState.planner.plan(child)
-        .map(FilteredShowNamespaceExec(_, spark.sparkContext)).toSeq
+        .map(FilteredShowNamespaceExec(_, spark)).toSeq
 
     case ObjectFilterPlaceHolder(child) if child.nodeName == "ShowTables" =>
       spark.sessionState.planner.plan(child)
-        .map(FilteredShowTablesExec(_, spark.sparkContext)).toSeq
+        .map(FilteredShowTablesExec(_, spark)).toSeq
 
     case _ => Nil
   }
