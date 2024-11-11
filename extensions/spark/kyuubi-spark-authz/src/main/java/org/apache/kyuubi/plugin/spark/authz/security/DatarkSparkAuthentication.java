@@ -77,12 +77,9 @@ public class DatarkSparkAuthentication {
         if ("DATABASE".equalsIgnoreCase(objectType.toString())) {
             //校验数据库的权限
             return checkDatabasesPermission(permissionInfo, database, accessType);
-        } else if ("TABLE".equalsIgnoreCase(objectType.toString())) {
-            //校验数据表的权限
+        } else if ("TABLE".equalsIgnoreCase(objectType.toString()) || "VIEW".equalsIgnoreCase(objectType.toString())) {
+            //校验数据表或者视图的权限
             return checkTablePermission(permissionInfo, database, table, accessType);
-        } else if ("VIEW".equalsIgnoreCase(objectType.toString())) {
-            //校验VIEW的权限
-            return checkViewPermission(permissionInfo, database, table, accessType);
         } else if ("COLUMN".equalsIgnoreCase(objectType.toString())) {
             // 校验列的权限
             return checkColumnPermission(permissionInfo, database, table, column, accessType);
@@ -167,7 +164,7 @@ public class DatarkSparkAuthentication {
             tablePermissionInfo = tables.get(table.toLowerCase());
         }
         /*
-         * 表级的权限只校验SELECT、USE权限，其他所有权限都不通过，对应的Commond命令如下：
+         * 表、视图的权限只校验SELECT、USE权限，其他所有权限都不通过，对应的Commond命令如下：
          * select:QUERY | SHOW_CREATETABLE | SHOWPARTITIONS | SHOW_TBLPROPERTIES
          * use:DESCTABLE,SHOWTABLES
          */

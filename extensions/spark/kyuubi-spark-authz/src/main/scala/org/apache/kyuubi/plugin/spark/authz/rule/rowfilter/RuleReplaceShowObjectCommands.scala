@@ -20,7 +20,7 @@ package org.apache.kyuubi.plugin.spark.authz.rule.rowfilter
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.kyuubi.plugin.spark.authz.ranger.{AccessResource, SparkRangerAdminPlugin}
 import org.apache.kyuubi.plugin.spark.authz.util.{AuthZUtils, WithInternalChildren}
-import org.apache.kyuubi.plugin.spark.authz.{ObjectType, OperationType}
+import org.apache.kyuubi.plugin.spark.authz.{AccessControlException, ObjectType, OperationType}
 import org.apache.kyuubi.util.reflect.ReflectUtils._
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -97,10 +97,11 @@ case class FilteredShowColumnsCommand(delegated: RunnableCommand)
 
   override def run(spark: SparkSession): Seq[Row] = {
     val rows = delegated.run(spark)
+    val databaseName = delegated.asInstanceOf[ShowColumnsCommand].databaseName
     val table = delegated.asInstanceOf[ShowColumnsCommand].tableName
-    val ugi = AuthZUtils.getAuthzUgi(spark.sparkContext)
-    rows.filter(f =>
-      isAllowed(Row(table.database.orNull, table.table, f.getString(0)), ugi, spark))
+    val resource = AccessResource(ObjectType.TABLE, databaseName.getOrElse("default"), table.table, null)
+    SparkRangerAdminPlugin.isAllowed2(spark, resource, OperationType.SHOWTABLES, throwException = true)
+    rows
   }
 
   override protected def isAllowed(r: Row, ugi: UserGroupInformation, spark: SparkSession): Boolean = {

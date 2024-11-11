@@ -174,12 +174,21 @@ object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
     }
   }
 
-  def isAllowed2(spark: SparkSession, resource: AccessResource, opType: OperationType): Boolean = {
+  def isAllowed2(spark: SparkSession, resource: AccessResource, opType: OperationType, throwException: Boolean = false): Boolean = {
     val (userName, datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode, _) = getConfig(spark)
     val request =
       new DatarkSparkAccessRequest(resource, userName, opType.toString, AccessType.USE.toString.toLowerCase(Locale.ROOT),
         datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode)
-    DatarkSparkAuthentication.isAccessAllowed(request, false)
+    if (DatarkSparkAuthentication.isAccessAllowed(request, false)) {
+      true
+    } else {
+      if (throwException) {
+        throw new AccessControlException(s"Permission denied: user [$userName] does not" +
+                s" have [${request.getAccessType}] privilege on [${request.getResource.getAsString}]")
+      } else {
+        false
+      }
+    }
   }
 
 
@@ -197,7 +206,7 @@ object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
     //任务运行所在的项目空间
     val projectCode = spark.conf.get("spark.datark.security.authorization.query.appcode", "null")
     //权限校验不过是否抛出异常
-    val throwableException = spark.conf.get("spark.datark.security.authorization.query.appcode", "true")
+    val throwableException = spark.conf.get("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
     (userName, datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode, throwableException)
   }
 }

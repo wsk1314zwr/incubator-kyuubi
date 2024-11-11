@@ -28,6 +28,9 @@ import org.apache.kyuubi.plugin.spark.authz.util.ReservedKeys._
 
 abstract class Authorization(spark: SparkSession) extends Rule[LogicalPlan] {
   override def apply(plan: LogicalPlan): LogicalPlan = {
+    if (!"true".equalsIgnoreCase(spark.sparkContext.getConf.get("spark3.4.3.datark.security.authorization.enable", "false"))) {
+      return plan
+    }
     plan match {
       case plan if isAuthChecked(plan) => plan // do nothing if checked privileges already.
       case p =>
