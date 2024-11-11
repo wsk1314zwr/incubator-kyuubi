@@ -35,6 +35,7 @@
         <module>kyuubi-trino-it</module>
         <module>kyuubi-jdbc-it</module>
         <module>kyuubi-zookeeper-it</module>
+        <module>kyuubi-spark-it</module>
     </modules>
 
     <profiles>

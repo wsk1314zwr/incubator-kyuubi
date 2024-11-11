@@ -26,7 +26,7 @@
 
   <property>
     <name>ranger.plugin.spark.policy.source.impl</name>
-    <value>org.apache.kyuubi.plugin.spark.authz.ranger.RangerLocalClient</value>
+    <value>org.apache.kyuubi.plugin.spark.authz.client.RangerLocalClient</value>
   </property>
 
   <property>
@@ -34,9 +34,9 @@
     <value>localhost_dummy:12345</value>
   </property>
 
-  <property>
-    <name>ranger.plugin.spark.policy.cache.dir</name>
-    <value>target/tmp</value>
-  </property>
+<!--  <property>-->
+<!--    <name>ranger.plugin.spark.policy.cache.dir</name>-->
+<!--    <value>target/tmp</value>-->
+<!--  </property>-->
 
 </configuration>
