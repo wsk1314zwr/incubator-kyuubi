@@ -134,13 +134,6 @@ case class RuleAuthorization(spark: SparkSession) extends Authorization(spark) {
       }
     }.toSeq
 
-//    if (authorizeInSingleCall) {
-//      verify(requestArrays.flatten, auditHandler)
-//    } else {
-//      requestArrays.flatten.foreach { req =>
-//        verify(Seq(req), auditHandler)
-//      }
-//    }
     requestArrays.flatten.foreach {request =>
       val allowed = DatarkSparkAuthentication.isAccessAllowed(request, true)
       if (!allowed && "true".equalsIgnoreCase(throwableException)) {

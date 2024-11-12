@@ -99,7 +99,7 @@ case class FilteredShowColumnsCommand(delegated: RunnableCommand)
     val rows = delegated.run(spark)
     val databaseName = delegated.asInstanceOf[ShowColumnsCommand].databaseName
     val table = delegated.asInstanceOf[ShowColumnsCommand].tableName
-    val resource = AccessResource(ObjectType.TABLE, databaseName.getOrElse("default"), table.table, null)
+    val resource = AccessResource(ObjectType.TABLE, table.database.getOrElse("default"), table.table, null)
     SparkRangerAdminPlugin.isAllowed2(spark, resource, OperationType.SHOWTABLES, throwException = true)
     rows
   }

@@ -45,8 +45,8 @@ object SparkHiveRemoteExample extends Logging {
 //                .config("spark.sql.adaptive.optimizer.excludedRules", "org.apache.spark.sql.catalyst.optimizer.SubmarineRowFilterExtension")
                 .config("spark3.4.3.datark.security.authorization.enable", "true")
                 .config("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
-//                .config("spark.datark.security.authorization.user", "wsk")
-                .config("spark.datark.security.authorization.user", "ly6879")
+                .config("spark.datark.security.authorization.user", "wsk")
+//                .config("spark.datark.security.authorization.user", "ly6879")
 //                .config("spark.datark.security.authorization.url", "http://127.0.0.1:8080")
                 .config("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-dev.devops.91lyd.com")
 //                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.servyou-release.devops.91lyd.com")
@@ -84,7 +84,7 @@ object SparkHiveRemoteExample extends Logging {
         logInfo("这里是测试111")
 
         //测试1： show databases 是否展示有权限访问的库
-        test1(spark)
+//        test1(spark)
 
         //测试2：测试use 切换库是否能切换到有权限访问的库
 //        test2(spark)
@@ -111,17 +111,18 @@ object SparkHiveRemoteExample extends Logging {
 //        test9(spark)
 
         //测试10：insert into 权限
-//        spark.sql("insert into hive_test.wsk_pt_m_lifecycle_test7 PARTITION(pt_d = '2021-01-01') select 1").collect().foreach(println(_))
+//        spark.sql("insert into hive_test.wsk_pt_m_lifecycle_test7 PARTITION(pt_d = '2021-01-01') select 1,2").collect().foreach(println(_))
 //        spark.sql("select count(1) from hive_test.wsk_pt_m_lifecycle_test7 where pt_d = '2021-01-01' ").collect().foreach(println(_))
 
         //测试11：LOAD DATA 权限
-//        sql("CREATE TABLE IF NOT EXISTS hive_test.wsk_test20220321 (key INT, value STRING) USING hive")
-//        sql("LOAD DATA LOCAL INPATH '/Users/skwang/Documents/workspace/workspace4/project/open_project/submarine/submarine-security/spark-security/src/test/resources/data/files/kv1.txt' INTO TABLE hive_test.wsk_test20220321")
+//        spark.sql("CREATE TABLE IF NOT EXISTS default.wsk_test20220322 (key INT, value STRING) USING hive")
+//        spark.sql("LOAD DATA LOCAL INPATH '/Users/skwang/Documents/workspace/workspace4/project/open_project/submarine/submarine-security/spark-security/src/test/resources/data/files/kv1.txt' INTO TABLE default.wsk_test20220322 ")
 
 
         //测试12：sqlDF
-//        val sqlDF = sql("SELECT key, value FROM hive_test.wsk_test20220321  WHERE key < 10 ORDER BY key")
+//        val sqlDF = spark.sql("SELECT key, value FROM hive_test.wsk_test20220321  WHERE key < 10 ORDER BY key")
 //        // The items in DataFrames are of type Row, which allows you to access each column by ordinal.
+//        import spark.implicits._
 //        val stringsDS = sqlDF.map {
 //            case Row(key: Int, value: String) => s"Key: $key, Value: $value"
 //        }
@@ -132,14 +133,17 @@ object SparkHiveRemoteExample extends Logging {
 //        recordsDF.createOrReplaceTempView("records")
 
         //测试14：join语法 权限
-//        sql("SELECT * FROM records r JOIN hive_test.wsk_test20220321  s ON r.key = s.key").show()
+//        spark.sql("SELECT * FROM hive_test.wsk_pt_m_lifecycle_test7 r JOIN hive_test.wsk_test20220321  s ON r.id = s.key").show()
 
         //测试14reset 重置session相关配置测试
-//        sql("set datark.security.authorization.user=zhazhahhui")
-//        sql("SELECT * FROM records r JOIN hive_test.wsk_test20220321  s ON r.key = s.key").show()
+//        spark.sql("set datark.security.authorization.user=zhazhahhui")
+//        spark.sql("SELECT * FROM  hive_test.wsk_pt_m_lifecycle_test7 r JOIN hive_test.wsk_test20220321  s ON r.id = s.key").show()
 
         //测试15：concat 函数解析测试
 //        test15(spark)
+
+        //测试16：子查询 字段解析 + where 过滤测试 以及 order by测试
+//        test16(spark)
 
         //测试17: 校验字段级权限进行， count(1),count(*),count(字段)
 //        test17(spark)
@@ -164,7 +168,7 @@ object SparkHiveRemoteExample extends Logging {
 
 //        //select '1''23' 未报错校验
 //        test24(spark)
-
+//
         //long overflow测试
 //        test25(spark)
 
@@ -191,9 +195,9 @@ object SparkHiveRemoteExample extends Logging {
         //测试33: orc snappy文件无法解压问题分析
 //        test33(spark)
 
-//        //测试34:  orc snappy文件无法解压问题分析,最终定位 表创建时未指定文件存储格式，使用默认的Text存储，最终生成的的是InsertIntoHiveTable Command，而使用orc存储的表生成的是InsertIntoHadoopFsRelationCommand
+//        //测试34: text权限丢失，使用默认的Text存储，最终生成的的是InsertIntoHiveTable Command，而使用orc存储的表生成的是InsertIntoHadoopFsRelationCommand
 //        test34(spark)
-//
+//`
 //        //测试35: 只有select权限的表却能插入数据
 //        test35(spark)
 
@@ -206,6 +210,11 @@ object SparkHiveRemoteExample extends Logging {
         //测试38：生产orc文件无法正确读取
         //test38(spark)
 
+        //测试39：SHOW COLUMNS校验表级别use权限
+//        test39(spark)
+
+        //测试40：读写paimon表测试
+//        test40(spark)
 
         spark.stop()
 
@@ -244,16 +253,16 @@ object SparkHiveRemoteExample extends Logging {
     def test4(spark: SparkSession) = {
         //测试4：测试 show tables 是否只展示有权限访问的表
         spark.sql("show tables").collect().foreach(println(_)) //显示默认default库的所有表
-        spark.sql("use datark_dim_test") //切换只有USE权限的datark_dim_test库，展示所有USE或者SELECT权限的表
+        spark.sql("use datark_test") //切换只有USE权限的datark_dim_test库，展示所有USE或者SELECT权限的表
         spark.sql("show tables").collect().foreach(println(_))
     }
 
     def test5(spark: SparkSession) = {
         //测试5: 测试是否有权限crteate |drop table
-        spark.sql("drop table hr_test.wsk_test20220107001") //删除表
+        spark.sql("drop table if exists default.wsk_test20220107001") //删除表
         spark.sql(
             """
-              | CREATE TABLE `hr_test`.`wsk_test20220107001`(
+              | CREATE TABLE `default`.`wsk_test20220107001`(
               |`id` bigint,
               |`employee_id` bigint,
               |`emps` array<string>,
@@ -273,7 +282,7 @@ object SparkHiveRemoteExample extends Logging {
               |'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'""".stripMargin)  //创建表
 
         try {
-            spark.sql("drop table datark_dim_test.oec_lease_empower_info") //显示默认default库的所有表
+            spark.sql("drop table datark_dim_test.01_sys_user") //显示默认default库的所有表
         } catch {
             case _: Exception => logError("drop table 权限校验失败")
         }
@@ -317,49 +326,12 @@ object SparkHiveRemoteExample extends Logging {
 
     def test6(spark: SparkSession) = {
         //测试6: 测试是否有敏感字段权限
-        spark.sql("select * from hr_test.wsk_test20220107001").collect().foreach(println(_)) //select * 查询有库ALL权限的表
-        spark.sql("select * from  datark_dim_test.oec_lease_empower_info where pt_d = '2022-06-20' and id > 111 and substr(customer_id,3) = '123' ").collect().foreach(println(_)) ///select * 查询只有SELECT权限的表
+        spark.sql("select * from  `default`.`wsk_test20220107001` ").collect().foreach(println(_)) //select * 查询有库ALL权限的表
+        spark.sql("select * from  datark_test.wsk_mysearch_scene_market_divide_view ").collect().foreach(println(_)) ///select * 查询只有SELECT权限的表
         try {
-            spark.sql("select * from  datark_dim_test.liyang where pt_d = '2022-06-20'").collect().foreach(println(_)) ///select * 查询只有部分字段权限的表
+            spark.sql("select * from datark_dwd_test.es2mysql_fumm_test_out ").collect().foreach(println(_)) ///select * 查询只有部分字段权限的表
         } catch {
-            case _: Exception => logError("select * table 权限校验失败")
-        }
-    }
-
-    def test8(spark: SparkSession) = {
-
-//        spark.sql("select * from hr_test.wsk_test20220107001").collect().foreach(println(_))
-//        spark.sql("INSERT into TABLE `hr_test`.`wsk_test20220107002` SELECT 1,1,1,1")
-        //测试8: 测试是否具有create｜ drop view的权限
-//        spark.sql("select * from hr_test.wsk_test20220107001_v2").collect().foreach(println(_))
-//        spark.sql("DROP VIEW hr_test.wsk_test20220107001_v2")
-        spark.sql(
-            """
-              |create view if not exists hr_test.wsk_test20220107001_v2
-              |as
-              |select * from hr_test.wsk_test20220107001
-              |""".stripMargin) //在有ALL权限的库进行create view
-        spark.sql("drop view hr_test.wsk_test20220107001_v2") //在有ALL权限的库进行drop view
-        try {
-            spark.sql(
-                """
-                  |create view if not exists hive_test.wsk_test20220107001_v999
-                  |as
-                  |select * from hr_test.wsk_test20220107001
-                  |""".stripMargin) //读取ALL的表create view注册到无ALL权限的库
-        } catch {
-            case e: Exception => logError("create view 权限校验失败")
-        }
-
-        try {
-            spark.sql(
-                """
-                  |create view if not exists hive_test.liyang_v
-                  |as
-                  |select * from datark_dim_test.liyang
-                  |""".stripMargin) //读取无SELECT权限的表create view注册到无ALL权限的库
-        } catch {
-            case _: Exception => logError("create view 权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -368,20 +340,20 @@ object SparkHiveRemoteExample extends Logging {
         //测试8:create table as 的权限
         spark.sql(
             """
-              |create table hr_test.wsk_test20220107001_t
+              |create table default.wsk_mysearch_scene_market_divide_5
               |as
-              |select * from hr_test.wsk_test20220107001
+              |select * from datark_test.wsk_mysearch_scene_market_divide_3
               |""".stripMargin) //在有ALL权限的库进行create table
-        spark.sql("drop table hr_test.wsk_test20220107001_t") //在有ALL权限的库进行drop table
+        spark.sql("drop table default.wsk_mysearch_scene_market_divide_5") //在有ALL权限的库进行drop table
         try {
             spark.sql(
                 """
                   |create table datark_dim_test.wsk_test20220107001_t
                   |as
-                  |select * from hr_test.wsk_test20220107001
+                  |select * from datark_test.wsk_mysearch_scene_market_divide_3
                   |""".stripMargin) //读取ALL的表create table注册到无ALL权限的库
         } catch {
-            case _: Exception => logError("create table 权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -389,10 +361,10 @@ object SparkHiveRemoteExample extends Logging {
                 """
                   |create table datark_dim_test.wsk_test20220107001_001
                   |stored as parquet as
-                  |select * from hr_test.wsk_test20220107001
+                  |select * from  `default`.`wsk_test20220107001`
                   |""".stripMargin) //读取ALL的表create table stored as parquet as 注册到无ALL权限的库
         } catch {
-            case _: Exception => logError("create table 权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -400,20 +372,49 @@ object SparkHiveRemoteExample extends Logging {
                 """
                   |create table datark_dim_test.liyang_t
                   |as
-                  |select * from datark_dim_test.liyang
+                  |select * from datark_test.aaa_dcm
                   |""".stripMargin) //读取无SELECT权限的表create table注册到无ALL权限的库
         } catch {
-            case _: Exception => logError("create table 权限校验失败")
+            case e: Exception => e.printStackTrace()
+        }
+    }
+
+    //测试8: 测试是否具有create drop view的权限
+    def test8(spark: SparkSession) = {
+
+//        spark.sql(
+//            """
+//              |create view if not exists default.wsk_test20220107001_v2
+//              |as
+//              |select * from datark_test.wsk_mysearch_scene_market_divide_3
+//              |""".stripMargin) //在有ALL权限的库进行create view
+//        spark.sql("drop view default.wsk_test20220107001_v2") //在有ALL权限的库进行drop view
+        try {
+            spark.sql(
+                """
+                  |create view if not exists hive_test.wsk_test20220107001_v999
+                  |as
+                  |select * from datark_dim_test.01_sys_user
+                  |""".stripMargin) //读取ALL的表create view注册到无ALL权限的库
+        } catch {
+            case e: Exception => e.printStackTrace()
+        }
+
+        try {
+            spark.sql(
+                """
+                  |create view if not exists hive_test.liyang_v
+                  |as
+                  |select * from datark_test.aaa_dcm
+                  |""".stripMargin) //读取无SELECT权限的表create view注册到无ALL权限的库
+        } catch {
+            case e: Exception => e.printStackTrace()
         }
     }
 
     def test9(spark: SparkSession) = {
         //测试9:SELECT * ViEW的权限
-        try {
-            spark.sql("select * from  datark_dim_test.liyang_v").collect().foreach(println(_)) //读取ALL的表create table注册到无ALL权限的库
-        } catch {
-            case _: Exception => logError("create table 权限校验失败")
-        }
+        spark.sql("select * from  datark_test.wsk_mysearch_scene_market_divide_view").collect().foreach(println(_)) //读取All视图的所有字段
     }
 
     def test(spark: SparkSession) = {
@@ -457,19 +458,19 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin).collect().foreach(println(_)) ///select * 查询只有部分字段权限的表
 
         } catch {
-            case _: Exception => logError("子查询 字段解析测试权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
     def test17(spark: SparkSession) = {
         //测试17: 校验字段级权限进行， count(1),count(*),count(字段)
         try {
-//            spark.sql(""" select count(2) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
-//            spark.sql(""" select count(*) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
-//           spark.sql(""" select count(id) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
+            spark.sql(""" select count(1) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
+            spark.sql(""" select count(*) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
+           spark.sql(""" select count(id) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
             spark.sql(""" select count(account_id) from  datark_dim_test.liyang""".stripMargin).collect().foreach(println(_))
         } catch {
-            case _: Exception => logError("子查询 字段解析测试权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -480,7 +481,7 @@ object SparkHiveRemoteExample extends Logging {
                 """INSERT overwrite table hive_test.sq_test2103_06
                   |SELECT * from datark_dim_test.sq_test2103_06""".stripMargin)
         } catch {
-            case _: Exception => logError("子查询 字段解析测试权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -492,14 +493,14 @@ object SparkHiveRemoteExample extends Logging {
                   |select * from datark_dim_test.liyang
                   |""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
             spark.sql(
                 """select * from aiii_4_view""".stripMargin).collect().foreach(println(_))
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -523,7 +524,7 @@ object SparkHiveRemoteExample extends Logging {
                   |)
                   |""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -532,7 +533,7 @@ object SparkHiveRemoteExample extends Logging {
                   |select * from
                   |   (select * ,row_number() over( partition by `institution_id`,`institution_type` order by `@mt` desc) as rowNumber  from aiii_4 where `@del` = false) z where z.rowNumber <= 1""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -551,7 +552,7 @@ object SparkHiveRemoteExample extends Logging {
                   |  security.vault.appsecret 'yihh+ahidJSH4gT0mUMpZw=='
                   |)""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -559,7 +560,7 @@ object SparkHiveRemoteExample extends Logging {
                 """CREATE TEMPORARY VIEW mcbbi_3_view as
                   |select *  from mcbbi_3 where `@del` = false""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -606,7 +607,7 @@ object SparkHiveRemoteExample extends Logging {
                   |  security.vault.appsecret 'yihh+ahidJSH4gT0mUMpZw=='
                   |);""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -645,7 +646,7 @@ object SparkHiveRemoteExample extends Logging {
                   |  mcbbi_3_view mcbbi_3
                   |  left join aiii_4_view aiii_4 on mcbbi_3.`customer_id` = aiii_4.`institution_id` and mcbbi_3.`customer_type` = aiii_4.`institution_type`""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -678,7 +679,7 @@ object SparkHiveRemoteExample extends Logging {
                   |,hoodie.table.keygenerator.class='org.apache.hudi.keygen.NonpartitionedKeyGenerator' -- 非分区表键生成器调整成 NonpartitionedKeyGenerator
                   |) """.stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
         spark.sql("show tables in servyou_ods").collect().foreach(println(_))
         try {
@@ -697,12 +698,12 @@ object SparkHiveRemoteExample extends Logging {
                   |, from_unixtime(unix_timestamp('2022-06-18', "yyyy-MM-dd"), 'yyyy-MM-dd HH:mm:ss')
                   |FROM hive_test.ds_test4""".stripMargin)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
         try {
             spark.sql("SELECT * from `servyou_ods`.`hudi_ds_test4_pri_wsk_20220707003`  limit 10").collect().foreach(println(_))
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -733,7 +734,7 @@ object SparkHiveRemoteExample extends Logging {
                   |                 where is_delete = 0 and `pt_d` = '2022-7-12')s;
                   |""".stripMargin).show(false)
         } catch {
-            case _: Exception => logError("权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -778,7 +779,7 @@ object SparkHiveRemoteExample extends Logging {
                   |select * from hr_test.wsk_test20220107001
                   |""".stripMargin) //读取ALL的表create view注册到无ALL权限的库
         } catch {
-            case e: Exception => logError("create view 权限校验失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -787,7 +788,7 @@ object SparkHiveRemoteExample extends Logging {
         try {
             spark.sql("show roles").show(false)
         } catch {
-            case e: Exception => logError("查询所有hive角色失败")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -827,7 +828,7 @@ object SparkHiveRemoteExample extends Logging {
                         |     zr_dev.TMP_MX_YH_JMYHYXSGJMX_LSB_TSZD_JCZD_QSYJHJ_wsk_test_2 t;
                         |     """.stripMargin).show(false)
         } catch {
-            case e: Exception => logError("")
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -869,7 +870,7 @@ object SparkHiveRemoteExample extends Logging {
                   |     """.stripMargin).show(false)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常",e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -891,7 +892,7 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin).show(false)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -909,7 +910,7 @@ object SparkHiveRemoteExample extends Logging {
 //            df.show()
 //            Thread.sleep(5000)
 //        } catch {
-//            case e: Exception => logError("发生异常", e)
+//            case e: Exception => e.printStackTrace()
 //        }
 
 ////        //插入数据 INSERT OVERWRITE
@@ -926,7 +927,7 @@ object SparkHiveRemoteExample extends Logging {
 //            df.show()
 //            Thread.sleep(5000)
 //        } catch {
-//            case e: Exception => logError("发生异常", e)
+//            case e: Exception => e.printStackTrace()
 //        }
 //
 //        //插入数据 INSERT INTO
@@ -943,7 +944,7 @@ object SparkHiveRemoteExample extends Logging {
 //            println(df.queryExecution.optimizedPlan)
 //            Thread.sleep(5000)
 //        } catch {
-//            case e: Exception => logError("发生异常", e)
+//            case e: Exception => e.printStackTrace()
 //        }
 //
 //
@@ -959,7 +960,7 @@ object SparkHiveRemoteExample extends Logging {
 //            println(df.queryExecution.optimizedPlan)
 //            Thread.sleep(5000)
 //        } catch {
-//            case e: Exception => logError("发生异常", e)
+//            case e: Exception => e.printStackTrace()
 //        }
 
         //插入数据 CREATE TABLE as select  注意包裹了一层select * 导致走了OptimizedCreateHiveTableAsSelectCommand而非CreateHiveTableAsSelectCommand命令
@@ -976,7 +977,7 @@ object SparkHiveRemoteExample extends Logging {
 //            println(df.queryExecution.optimizedPlan)
 //            Thread.sleep(5000)
 //        } catch {
-//            case e: Exception => logError("发生异常", e)
+//            case e: Exception => e.printStackTrace()
 //        }
 
         try {
@@ -988,7 +989,7 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin).show(1000)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
     def test32(spark: SparkSession) = {
@@ -1023,7 +1024,7 @@ object SparkHiveRemoteExample extends Logging {
             df.show()
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -1039,37 +1040,38 @@ object SparkHiveRemoteExample extends Logging {
             df.show()
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
     def test34(spark: SparkSession) = {
-        //测试34: orc snappy文件无法解压问题分析,最终定位 表创建时未指定文件存储格式，使用默认的Text存储，最终生成的的是InsertIntoHiveTable Command，而使用orc存储的表生成的是InsertIntoHadoopFsRelationCommand
+        //测试34:使用默认的Text存储，最终生成的的是InsertIntoHiveTable Command，而使用orc存储的表生成的是InsertIntoHadoopFsRelationCommand
         try {
-            val df = spark.sql(
+            spark.sql(
                 """
                   |
-                  |INSERT into datark_dwd_test.sys_user_bak
+                  |INSERT into datark_dim_test.01_sys_use_test
                   |SELECT
-                  | id
-                  |,user_name
-                  |,user_password
-                  |,user_zh_name
-                  |,user_type
-                  |,email
-                  |,phone
-                  |,tenant_id
-                  |,create_time
-                  |,update_time
-                  |,queue
-                  |,pt_d
-                  | from default.sys_user_bak2;
+                  | *
+                  | from  datark_dim_test.01_sys_user;
                   |
                   |""".stripMargin)
-            df.show()
-            Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
+        }
+
+        try {
+            spark.sql(
+                """
+                  |
+                  |INSERT into datark_dim_test.01_sys_use_test2
+                  |SELECT
+                  | *
+                  | from  datark_dim_test.01_sys_use_test;
+                  |
+                  |""".stripMargin)
+        } catch {
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -1085,7 +1087,7 @@ object SparkHiveRemoteExample extends Logging {
             df.show()
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -1101,7 +1103,7 @@ object SparkHiveRemoteExample extends Logging {
             df.show()
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -1116,7 +1118,7 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
 
         try {
@@ -1129,7 +1131,7 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
@@ -1146,8 +1148,76 @@ object SparkHiveRemoteExample extends Logging {
                   |""".stripMargin).show(1000)
             Thread.sleep(5000)
         } catch {
-            case e: Exception => logError("发生异常", e)
+            case e: Exception => e.printStackTrace()
         }
     }
 
+    def test39(spark: SparkSession) = {
+        //测试39：SHOW COLUMNS校验表级别use权限
+        spark.sql(
+            """
+              |
+              |SHOW CREATE TABLE hive_test.wsk_pt_m_lifecycle_test7;
+              |
+              |
+              |""".stripMargin).show(1000)
+        try {
+            spark.sql(
+                """
+                  |
+                  |SHOW COLUMNS in datark_dwd_test.es2mysql_fumm_test_out ;
+                  |
+                  |
+                  |""".stripMargin).show(1000)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => e.printStackTrace()
+        }
+    }
+
+    def test40(spark: SparkSession) = {
+        //测试40：读、写、创建paimon表测试
+        spark.sql("""  add jar /Users/skwang/Documents/workspace/workspace4/project/open_project/incubator-kyuubi/integration-tests/kyuubi-spark-it/lib/paimon-hive-connector-2.3-servyou_0.8_release.jar """)
+        spark.sql("""  add jar /Users/skwang/Documents/workspace/workspace4/project/open_project/incubator-kyuubi/integration-tests/kyuubi-spark-it/lib/paimon-spark-3.4-servyou_0.8_release.jar """)
+//        spark.sql(
+//            """
+//              |
+//              |select * from `servyou_paimon`.`zr_dev_dev_zr_test_7cc`;
+//              |
+//              |
+//              |""".stripMargin).show(1000)
+//        try {
+//            spark.sql(
+//                """
+//                  |
+//                  |INSERT OVERWRITE `servyou_paimon`.`zr_dev_dev_zr_test_7cc` select 1,1,1,null;
+//                  |
+//                  |
+//                  |""".stripMargin).show(1000)
+//            Thread.sleep(5000)
+//        } catch {
+//            case e: Exception => e.printStackTrace()、
+        spark.sql("""set spark.sql.catalog.spark_catalog = org.apache.paimon.spark.SparkGenericCatalog""")
+        spark.sql(
+            """
+              |
+              |CREATE TABLE zr_dev_dev_zr_test_7cc3 (
+              |  id STRING COMMENT 'vvrrcc',
+              |  name STRING COMMENT 'cddc',
+              |  cdccd STRING COMMENT '',
+              |  paimon_op_ts TIMESTAMP COMMENT 'paimon cdc必选字段,标识数据binlog产生时间')
+              |USING paimon
+              |COMMENT ''
+              |TBLPROPERTIES (
+              |  'bucket' = '1',
+              |  'num-sorted-run.stop-trigger' = '2147483647',
+              |  'path' = 'hdfs://nameHAservice/user/hive/warehouse/servyou_paimon.db/zr_dev_dev_zr_test_7cc',
+              |  'primary-key' = 'id',
+              |  'sequence.field' = 'paimon_op_ts',
+              |  'sink.parallelism' = '1',
+              |  'snapshot.expire.limit' = '1000',
+              |  'sort-spill-threshold' = '10',
+              |  'write-only' = 'true')
+              |""".stripMargin)
+        }
 }
