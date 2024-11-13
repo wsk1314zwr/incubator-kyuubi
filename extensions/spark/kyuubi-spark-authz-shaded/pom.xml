@@ -30,6 +30,10 @@
     <name>Kyuubi Dev Spark Authorization Extension Shaded</name>
     <url>https://kyuubi.apache.org/</url>
 
+    <properties>
+        <kyuubi.shade.packageName>org.apache.kyuubia.shade</kyuubi.shade.packageName>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.kyuubi</groupId>
@@ -56,6 +60,7 @@
                             <!-- JNA is the transitive dependency of gethostname4j -->
                             <include>net.java.dev.jna:jna</include>
                             <include>net.java.dev.jna:jna-platform</include>
+                            <inclede>com.fasterxml.jackson.*:*</inclede>
                         </includes>
                     </artifactSet>
                     <filters>
@@ -82,8 +87,16 @@
                     </filters>
                     <relocations>
                         <relocation>
+                            <pattern>org.apache.kyuubi</pattern>
+                            <shadedPattern>org.apache.kyuubia</shadedPattern>
+                        </relocation>
+                        <relocation>
                             <pattern>org.codehaus.jackson</pattern>
                             <shadedPattern>${kyuubi.shade.packageName}.org.codehaus.jackson</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.fasterxml.jackson</pattern>
+                            <shadedPattern>${kyuubi.shade.packageName}.com.fasterxml.jackson</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.sun.jersey</pattern>
