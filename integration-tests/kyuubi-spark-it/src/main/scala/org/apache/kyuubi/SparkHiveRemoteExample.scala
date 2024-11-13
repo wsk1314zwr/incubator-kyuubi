@@ -45,8 +45,8 @@ object SparkHiveRemoteExample extends Logging {
 //                .config("spark.sql.adaptive.optimizer.excludedRules", "org.apache.spark.sql.catalyst.optimizer.SubmarineRowFilterExtension")
                 .config("spark3.4.3.datark.security.authorization.enable", "true")
                 .config("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
-                .config("spark.datark.security.authorization.user", "wsk")
-//                .config("spark.datark.security.authorization.user", "ly6879")
+//                .config("spark.datark.security.authorization.user", "wsk")
+                .config("spark.datark.security.authorization.user", "ly6879")
 //                .config("spark.datark.security.authorization.url", "http://127.0.0.1:8080")
                 .config("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-dev.devops.91lyd.com")
 //                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.servyou-release.devops.91lyd.com")
@@ -59,7 +59,7 @@ object SparkHiveRemoteExample extends Logging {
                 .config("spark.datark.security.authorization.query.task.id", "1025")
                 // 节点id所在空间的appcode，主要用于空间的行级别过滤
                 .config("spark.datark.security.authorization.query.appcode", "mahq-datatest-002")
-                .config("spark.datark.security.authorization.rowFilter.enable", "true")
+                .config("spark3.4.3.datark.security.authorization.rowFilter.enable", "true")
                 /**
                  * spark 集成hudi 并同步元数据到hive
                  * 1）开启如下两个config配置
@@ -912,15 +912,28 @@ object SparkHiveRemoteExample extends Logging {
 //        } catch {
 //            case e: Exception => e.printStackTrace()
 //        }
+//
+//        try {
+//            val df = spark.sql(
+//                """
+//                  |
+//                  |select *  from datark_dev.wsk_table_row_filter_test where company_id > 6 ;
+//                  |
+//                  |""".stripMargin)
+//            println(df.queryExecution.optimizedPlan)
+//            df.show()
+//            Thread.sleep(5000)
+//        } catch {
+//            case e: Exception => e.printStackTrace()
+//        }
 
 ////        //插入数据 INSERT OVERWRITE
 //        try {
 //            val df = spark.sql(
 //                """
 //                  |
-//                  |INSERT OVERWRITE  `hr_test`.wsk_test_row_fileter2
-//                  |SELECT *  from `hr_test`.`wsk_test_row_fileter`
-//                  |where employee_id >=2 AND employee_id< 6
+//                  |INSERT OVERWRITE  default.wsk_table_row_filter_test
+//                  |SELECT *  from datark_dev.wsk_table_row_filter_test where company_id >= 6
 //                  |
 //                  |""".stripMargin)
 //            println(df.queryExecution.optimizedPlan)
@@ -930,15 +943,13 @@ object SparkHiveRemoteExample extends Logging {
 //            case e: Exception => e.printStackTrace()
 //        }
 //
-//        //插入数据 INSERT INTO
+        //插入数据 INSERT INTO
 //        try {
-//            spark.sql("TRUNCATE TABLE `hr_test`.`wsk_test_row_fileter2`")
 //            val df = spark.sql(
 //                """
 //                  |
-//                  |INSERT INTO TABLE `hr_test`.wsk_test_row_fileter2
-//                  |SELECT *
-//                  |from `hr_test`.`wsk_test_row_fileter` where employee_id >= 2 AND employee_id < 6;
+//                  |INSERT INTO TABLE default.wsk_table_row_filter_test
+//                  |SELECT *  from datark_dev.wsk_table_row_filter_test where company_id >= 7
 //                  |
 //                  |""".stripMargin)
 //            println(df.queryExecution.optimizedPlan)
@@ -946,47 +957,17 @@ object SparkHiveRemoteExample extends Logging {
 //        } catch {
 //            case e: Exception => e.printStackTrace()
 //        }
-//
-//
-//        //插入数据 CREATE TABLE as select
-//        try {
-//            spark.sql("DROP TABLE if exists `hr_test`.wsk_test_row_fileter3;")
-//            val df = spark.sql(
-//                """
-//                  |
-//                  |CREATE TABLE `hr_test`.wsk_test_row_fileter3 as SELECT *  from `hr_test`.`wsk_test_row_fileter` where employee_id >=2 AND employee_id< 6
-//                  |
-//                  |""".stripMargin)
-//            println(df.queryExecution.optimizedPlan)
-//            Thread.sleep(5000)
-//        } catch {
-//            case e: Exception => e.printStackTrace()
-//        }
-
-        //插入数据 CREATE TABLE as select  注意包裹了一层select * 导致走了OptimizedCreateHiveTableAsSelectCommand而非CreateHiveTableAsSelectCommand命令
-//        try {
-//            spark.sql("DROP TABLE if exists datark_query_download_temp.wsktest;")
-//            val df = spark.sql(
-//                """
-//                  |
-//                  |create table datark_query_download_temp.wsktest stored
-//                  | as orc as
-//                  |select * from (select * from datark_dev.wsk_table_row_filter_test) query_export_datarkalias limit 500000;
-//                  |
-//                  |""".stripMargin)
-//            println(df.queryExecution.optimizedPlan)
-//            Thread.sleep(5000)
-//        } catch {
-//            case e: Exception => e.printStackTrace()
-//        }
-
+        //插入数据 CREATE TABLE as select
         try {
-            spark.sql(
+            val df = spark.sql(
                 """
                   |
-                  | SELECT * from datark_dev.wsk_table_row_filter_test;
+                  |create table default.wsk_table_row_filter_test3 stored
+                  | as orc as
+                  |select * from (SELECT *  from datark_dev.wsk_table_row_filter_test ) query_export_datarkalias limit 500000;
                   |
-                  |""".stripMargin).show(1000)
+                  |""".stripMargin)
+            println(df.queryExecution.optimizedPlan)
             Thread.sleep(5000)
         } catch {
             case e: Exception => e.printStackTrace()

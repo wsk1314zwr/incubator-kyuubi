@@ -19,24 +19,29 @@ package org.apache.kyuubi.plugin.spark.authz.rule.rowfilter
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.plans.logical.{Filter, LogicalPlan}
-
 import org.apache.kyuubi.plugin.spark.authz.ObjectType
 import org.apache.kyuubi.plugin.spark.authz.OperationType.QUERY
+import org.apache.kyuubi.plugin.spark.authz.ranger.SparkRangerAdminPlugin.getConfig
 import org.apache.kyuubi.plugin.spark.authz.ranger._
 import org.apache.kyuubi.plugin.spark.authz.rule.RuleHelper
+import org.apache.kyuubi.plugin.spark.authz.security.DatarkSparkAuthentication
 import org.apache.kyuubi.plugin.spark.authz.serde._
 
 case class RuleApplyRowFilter(spark: SparkSession) extends RuleHelper {
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
-    val newPlan = mapChildren(plan) {
-      case p: RowFilterMarker => p
-      case scan if isKnownScan(scan) && scan.resolved =>
-        val tables = getScanSpec(scan).tables(scan, spark)
-        tables.headOption.map(applyFilter(scan, _)).getOrElse(scan)
-      case other => apply(other)
+    if (rowFilterEnabled()) {
+      val newPlan = mapChildren(plan) {
+        case p: RowFilterMarker => p
+        case scan if isKnownScan(scan) && scan.resolved =>
+          val tables = getScanSpec(scan).tables(scan, spark)
+          tables.headOption.map(applyFilter2(scan, _)).getOrElse(scan)
+        case other => apply(other)
+      }
+      newPlan
+    } else {
+      plan
     }
-    newPlan
   }
 
   private def applyFilter(
@@ -48,4 +53,18 @@ case class RuleApplyRowFilter(spark: SparkSession) extends RuleHelper {
     val filtered = filterExpr.foldLeft(plan)((p, expr) => Filter(expr, RowFilterMarker(p)))
     filtered
   }
+
+  private def applyFilter2(
+                                  plan: LogicalPlan,
+                                  table: Table): LogicalPlan = {
+    val (userName, datarkUrl, appCode, expireTime, _, _, _, projectCode, _) = getConfig(spark)
+    val tableDbName: String = table.database.getOrElse("default") + "." + table.table
+    val filterExprStr = DatarkSparkAuthentication.getTableRowFilterExp(userName, appCode, datarkUrl, expireTime, projectCode, tableDbName)
+    val filterExpr = Option(filterExprStr).filter(fe => fe != null && fe.nonEmpty).map(parse)
+    val filtered = filterExpr.foldLeft(plan)((p, expr) => Filter(expr, RowFilterMarker(p)))
+    filtered
+  }
+
+  private def rowFilterEnabled(): Boolean = "true".equalsIgnoreCase(spark.sparkContext.getConf.get("spark3.4.3.datark.security.authorization.rowFilter.enable", "false"))
+
 }

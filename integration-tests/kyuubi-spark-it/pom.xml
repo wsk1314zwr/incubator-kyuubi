@@ -112,5 +112,12 @@
             <systemPath>${pom.basedir}/lib/paimon-spark-3.4-servyou_0.8_release.jar</systemPath>
         </dependency>
 
+        <!-- 添加orc的依赖,解决sql 写orc表失败问题 -->
+        <dependency>
+            <groupId>org.apache.orc</groupId>
+            <artifactId>orc-core</artifactId>
+            <version>1.8.7</version>
+        </dependency>
+
     </dependencies>
 </project>
