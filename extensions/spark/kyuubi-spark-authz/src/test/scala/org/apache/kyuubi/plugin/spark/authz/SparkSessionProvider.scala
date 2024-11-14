@@ -40,8 +40,8 @@ trait SparkSessionProvider {
 
   protected val extraSparkConf: SparkConf = new SparkConf()
           .set("spark.datark.security.authorization.query.env", "dev")
-          .set("spark3.4.3.datark.security.authorization.enable", "true")
-          .set("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
+          .set("spark.3.4.3.datark.security.authorization.enable", "true")
+          .set("spark.3.4.3.datark.security.authorization.failed.throwableException", "true")
           .set("spark.datark.security.authorization.user", "wsk")
           .set("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-dev.devops.91lyd.com")
           .set("spark.datark.security.authorization.appcode", "spark_sql")
@@ -50,7 +50,7 @@ trait SparkSessionProvider {
           .set("spark.datark.security.authorization.query.type", "1")
           .set("spark.datark.security.authorization.query.task.id", "1025")
           .set("spark.datark.security.authorization.query.appcode", "mahq-datatest-002")
-          .set("spark3.4.3.datark.security.authorization.rowFilter.enable", "false")
+          .set("spark.3.4.3.datark.security.authorization.rowFilter.enable", "true")
 
   protected lazy val spark: SparkSession = {
     val metastore = {

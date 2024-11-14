@@ -26,7 +26,7 @@
 
   <property>
     <name>ranger.plugin.spark.policy.source.impl</name>
-    <value>org.apache.kyuubi.plugin.spark.authz.ranger.RangerLocalClient</value>
+    <value>org.apache.kyuubia.plugin.spark.authz.ranger.RangerLocalClient</value>
   </property>
 
   <property>

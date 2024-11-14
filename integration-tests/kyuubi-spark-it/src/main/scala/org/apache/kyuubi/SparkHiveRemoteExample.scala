@@ -43,8 +43,8 @@ object SparkHiveRemoteExample extends Logging {
                 //尝试排除规则，但是没成功，猜测SubmarineRowFilterExtension并不是AQE的规则列表的一部分，所以没有成功
 //                .config("spark.sql.adaptive.enabled=","true")
 //                .config("spark.sql.adaptive.optimizer.excludedRules", "org.apache.spark.sql.catalyst.optimizer.SubmarineRowFilterExtension")
-                .config("spark3.4.3.datark.security.authorization.enable", "true")
-                .config("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
+                .config("spark.3.4.3.datark.security.authorization.enable", "true")
+                .config("spark.3.4.3.datark.security.authorization.failed.throwableException", "true")
 //                .config("spark.datark.security.authorization.user", "wsk")
                 .config("spark.datark.security.authorization.user", "ly6879")
 //                .config("spark.datark.security.authorization.url", "http://127.0.0.1:8080")
@@ -59,7 +59,7 @@ object SparkHiveRemoteExample extends Logging {
                 .config("spark.datark.security.authorization.query.task.id", "1025")
                 // 节点id所在空间的appcode，主要用于空间的行级别过滤
                 .config("spark.datark.security.authorization.query.appcode", "mahq-datatest-002")
-                .config("spark3.4.3.datark.security.authorization.rowFilter.enable", "true")
+                .config("spark.3.4.3.datark.security.authorization.rowFilter.enable", "true")
                 /**
                  * spark 集成hudi 并同步元数据到hive
                  * 1）开启如下两个config配置
@@ -187,7 +187,7 @@ object SparkHiveRemoteExample extends Logging {
 //        test30(spark)
 
 //        //测试31: 测试 行级别过滤
-//        test31(spark)
+        test31(spark)
 
         //测试32: 测试 字段和表混乱
 //        test32(spark)
@@ -959,6 +959,11 @@ object SparkHiveRemoteExample extends Logging {
 //        }
         //插入数据 CREATE TABLE as select
         try {
+            spark.sql(
+                """
+                  |drop table if exists  default.wsk_table_row_filter_test3
+                  |
+                  |""".stripMargin)
             val df = spark.sql(
                 """
                   |

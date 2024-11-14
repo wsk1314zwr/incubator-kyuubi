@@ -65,6 +65,6 @@ case class RuleApplyRowFilter(spark: SparkSession) extends RuleHelper {
     filtered
   }
 
-  private def rowFilterEnabled(): Boolean = "true".equalsIgnoreCase(spark.sparkContext.getConf.get("spark3.4.3.datark.security.authorization.rowFilter.enable", "false"))
+  private def rowFilterEnabled(): Boolean = "true".equalsIgnoreCase(spark.sparkContext.getConf.get("spark.3.4.3.datark.security.authorization.rowFilter.enable", "false"))
 
 }

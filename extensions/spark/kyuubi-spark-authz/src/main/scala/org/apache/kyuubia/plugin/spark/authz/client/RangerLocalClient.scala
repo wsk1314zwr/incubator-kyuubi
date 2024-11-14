@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.spark.authz.client
+package org.apache.kyuubia.plugin.spark.authz.client
 
 import java.text.SimpleDateFormat
 

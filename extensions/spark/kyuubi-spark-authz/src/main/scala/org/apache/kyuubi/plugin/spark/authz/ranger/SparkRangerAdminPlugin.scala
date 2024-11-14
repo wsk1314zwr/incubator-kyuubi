@@ -206,7 +206,7 @@ object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
     //任务运行所在的项目空间
     val projectCode = spark.conf.get("spark.datark.security.authorization.query.appcode", "null")
     //权限校验不过是否抛出异常
-    val throwableException = spark.conf.get("spark3.4.3.datark.security.authorization.failed.throwableException", "true")
+    val throwableException = spark.conf.get("spark.3.4.3.datark.security.authorization.failed.throwableException", "true")
     (userName, datarkUrl, appCode, expireTime, auditEnable, datarkQueryType, datarkTaskId, projectCode, throwableException)
   }
 }
