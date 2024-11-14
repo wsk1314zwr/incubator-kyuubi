@@ -53,6 +53,27 @@ public class DatarkSparkAuthentication {
         return accessAllowed;
     }
 
+    public static String getAsString(AccessResource resource) {
+        String resStr = null;
+        if (Objects.nonNull(resource)) {
+            String database = resource.getDatabase();
+            String table = resource.getTable();
+            String column = resource.getColumn();
+            List<String> list = new ArrayList<>();
+            if (Objects.nonNull(database)) {
+                list.add(database);
+            }
+            if (Objects.nonNull(table)) {
+                list.add(table);
+            }
+            if (Objects.nonNull(column)) {
+                list.add(column);
+            }
+            resStr = StringUtils.join(list, "/");
+        }
+        return resStr;
+    }
+
     public static boolean isAccessAllowed(DatarkSparkAccessRequest request) {
         DatarkUserAuthedPermissionInfo permissionInfo = getUserPermissionInfo(request.getUser(), request.getAppCode(), request.getDatarkUrl(), request.getExpireTime(), request.getProjectCode());
         //无法获取用户信息，如datark api重启中、网络中断,权限直接判定通过
@@ -282,7 +303,7 @@ public class DatarkSparkAuthentication {
         executorService.execute(() -> {
             try {
                 String msg = String.format("user [%s] access [%s] resource [%s] permission accessAllowed [%s], datarkQueryType[%s], datarkTaskId[%s]",
-                        request.getUser(), request.getAccessType(), request.getResource().getAsString(), accessAllowed, request.getDatarkQueryType(), request.getDatarkTaskId());
+                        request.getUser(), request.getAccessType(), DatarkSparkAuthentication.getAsString(request.getResource()), accessAllowed, request.getDatarkQueryType(), request.getDatarkTaskId());
                 HashMap<String, String> heads = new HashMap<>();
                 heads.put("appCode", request.getAppCode());
                 HttpUtils.post(msg, request.getDatarkUrl() + DATARK_PRI_AUDIT_PATH, heads);

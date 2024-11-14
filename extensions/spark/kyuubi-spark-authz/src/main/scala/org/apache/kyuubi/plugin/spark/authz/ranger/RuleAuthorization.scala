@@ -138,7 +138,7 @@ case class RuleAuthorization(spark: SparkSession) extends Authorization(spark) {
       val allowed = DatarkSparkAuthentication.isAccessAllowed(request, true)
       if (!allowed && "true".equalsIgnoreCase(throwableException)) {
         throw new AccessControlException(s"Permission denied: user [$userName] does not" +
-                s" have [${request.getAccessType}] privilege on [${request.getResource.getAsString}]")
+                s" have [${request.getAccessType}] privilege on [${DatarkSparkAuthentication.getAsString(request.getResource)}]")
       }
     }
   }
