@@ -503,7 +503,9 @@ trait LineageParser {
       // be the `DataSourceV2Relation` not the `DataSourceV2ScanRelation`.
       // because the view from the table is not going to read it.
       case p: DataSourceV2Relation =>
-        val tableName = p.name
+        // 解决 paimon 设置 set spark.sql.catalog.spark_catalog = org.apache.paimon.spark.SparkGenericCatalog 无法正常解析血缘问题
+        val identifier = p.identifier.orNull
+        val tableName = "spark_catalog." + identifier.toString
         joinRelationColumnLineage(parentColumnsLineage, p.output, Seq(tableName))
 
       case p: LocalRelation =>

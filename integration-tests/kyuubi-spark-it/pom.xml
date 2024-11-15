@@ -11,6 +11,10 @@
     <artifactId>kyuubi-spark-it</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <spark.version>3.4.3</spark.version>
+    </properties>
+
     <name>Kyuubi Spark It</name>
     <url>https://kyuubi.apache.org/</url>
 
@@ -76,5 +80,35 @@
             <artifactId>spark-avro_2.10</artifactId>
             <version>2.0.1</version>
         </dependency>
+
+        <!-- 添加spark操作paimon的依赖 -->
+        <dependency>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-hive-connector-2.3</artifactId>
+            <version>servyou_0.8_release</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/lib/paimon-hive-connector-2.3-servyou_0.8_release.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-spark-3.4</artifactId>
+            <version>servyou_0.8_release</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/lib/paimon-spark-3.4-servyou_0.8_release.jar</systemPath>
+        </dependency>
+
+
     </dependencies>
 </project>

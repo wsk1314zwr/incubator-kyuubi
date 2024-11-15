@@ -67,7 +67,9 @@ object SparkHiveRemoteExample2 extends Logging {
         // 测试7：/(select 1..)>  的表级别级别
         //test7(spark)
         // 测试8：测试注释最后一行是\结尾
-        test8(spark)
+//        test8(spark)
+        //测试9：读、写、创建paimon表测试
+        test9(spark)
         spark.stop()
 
     }
@@ -308,5 +310,54 @@ object SparkHiveRemoteExample2 extends Logging {
         } catch {
             case e: Exception => logError("发生异常", e)
         }
+    }
+
+    def test9(spark: SparkSession) = {
+        //测试9：读、写、创建paimon表测试
+        spark.sql("""  add jar /Users/skwang/Documents/workspace/workspace4/project/open_project/incubator-kyuubi/integration-tests/kyuubi-spark-it/lib/paimon-hive-connector-2.3-servyou_0.8_release.jar """)
+        spark.sql("""  add jar /Users/skwang/Documents/workspace/workspace4/project/open_project/incubator-kyuubi/integration-tests/kyuubi-spark-it/lib/paimon-spark-3.4-servyou_0.8_release.jar """)
+        spark.sql("""set spark.sql.catalog.spark_catalog = org.apache.paimon.spark.SparkGenericCatalog""")
+        spark.sql(
+            """
+              |
+              |select * from `servyou_paimon`.`zr_dev_dev_zr_test_7cc4`;
+              |
+              |
+              |""".stripMargin).show(1000)
+        try {
+            spark.sql(
+                """
+                  |
+                  |INSERT OVERWRITE `servyou_paimon`.`zr_dev_dev_zr_test_7cc4` select 1,1,1,null;
+                  |
+                  |
+                  |""".stripMargin).show(1000)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => e.printStackTrace()
+
+        }
+
+//        spark.sql(
+//            """
+//              |
+//              |CREATE TABLE servyou_paimon.zr_dev_dev_zr_test_7cc4 (
+//              |  id STRING COMMENT 'vvrrcc',
+//              |  name STRING COMMENT 'cddc',
+//              |  cdccd STRING COMMENT '',
+//              |  paimon_op_ts TIMESTAMP COMMENT 'paimon cdc必选字段,标识数据binlog产生时间')
+//              |USING paimon
+//              |COMMENT ''
+//              |TBLPROPERTIES (
+//              |  'bucket' = '1',
+//              |  'num-sorted-run.stop-trigger' = '2147483647',
+//              |  'path' = 'hdfs://nameHAservice/user/hive/warehouse/servyou_paimon.db/zr_dev_dev_zr_test_7cc4',
+//              |  'primary-key' = 'id',
+//              |  'sequence.field' = 'paimon_op_ts',
+//              |  'sink.parallelism' = '1',
+//              |  'snapshot.expire.limit' = '1000',
+//              |  'sort-spill-threshold' = '10',
+//              |  'write-only' = 'true')
+//              |""".stripMargin)
     }
 }
