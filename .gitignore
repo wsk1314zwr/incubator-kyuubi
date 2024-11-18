@@ -78,3 +78,4 @@ conf/kyuubi-env.sh
 kyuubi-server/gen
 kyuubi-server/src/main/antlr4/org/apache/kyuubi/sql/*.tokens
 kyuubi-server/src/main/antlr4/org/apache/kyuubi/sql/gen/
+/integration-tests/kyuubi-spark-it/lib/*.jar
