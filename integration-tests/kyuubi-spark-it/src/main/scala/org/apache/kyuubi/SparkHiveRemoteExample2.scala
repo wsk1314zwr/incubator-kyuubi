@@ -69,7 +69,9 @@ object SparkHiveRemoteExample2 extends Logging {
         // 测试8：测试注释最后一行是\结尾
 //        test8(spark)
         //测试9：读、写、创建paimon表测试
-        test9(spark)
+//        test9(spark)
+        //测试10：创建视图异常，出现类not found异常
+        test10(spark)
         spark.stop()
 
     }
@@ -359,5 +361,38 @@ object SparkHiveRemoteExample2 extends Logging {
 //              |  'sort-spill-threshold' = '10',
 //              |  'write-only' = 'true')
 //              |""".stripMargin)
+    }
+
+    def test10(spark: SparkSession) = {
+        //测试10：创建视图异常，出现IdentifierWithDatabase类class not found异常, 最终定位是打包时 -Dspark.version=3.1.2导致spark3.4.3操作视图出现问题
+        //本质就是使用的TableIdentifier类的父类在不同spark版本是不一致,分别是IdentifierWithDatabase、CatalystIdentifier、生成的字节码中有强制转成父类检查：//checkcast org/apache/spark/sql/catalyst/IdentifierWithDatabase
+        //所以spark3.4.3会因为找不到IdentifierWithDatabase类而抛出异常，总结：子类接口一致，在不同版本下依赖的父类不一致，相同调用子类方法代码生成的class是不一致的
+        try {
+            spark.sql("""DROP view if exists 0609test2_wsk_v; """.stripMargin)
+            spark.sql(
+                """
+                  |
+                  |CREATE VIEW if not exists 0609test2_wsk_v AS
+                  |select
+                  |  `id`,
+                  |  `api_code`,
+                  |  `type`,
+                  |  `project_code`,
+                  |  `api_desc`,
+                  |  `create_user_id`,
+                  |  `modify_user_id`,
+                  |  `create_time`,
+                  |  `modify_time`
+                  |from
+                  |  `zjl_test`.`api_base_0530_1`;
+                  |
+                  |
+                  |""".stripMargin)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => e.printStackTrace()
+
+        }
+
     }
 }
