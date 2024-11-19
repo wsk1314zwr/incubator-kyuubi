@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, View}
 import org.apache.spark.sql.catalyst.rules.Rule
 
 import org.apache.kyuubi.plugin.spark.authz.util.AuthZUtils._
+import org.apache.kyuubia.plugin.spark.authz.rule.permanentview.PermanentViewMarker
 
 /**
  * Adding [[PermanentViewMarker]] for permanent views

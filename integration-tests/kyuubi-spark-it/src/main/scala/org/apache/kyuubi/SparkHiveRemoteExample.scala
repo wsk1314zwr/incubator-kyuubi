@@ -46,9 +46,11 @@ object SparkHiveRemoteExample extends Logging {
                 .config("spark.3.4.3.datark.security.authorization.enable", "true")
                 .config("spark.3.4.3.datark.security.authorization.failed.throwableException", "true")
 //                .config("spark.datark.security.authorization.user", "wsk")
-                .config("spark.datark.security.authorization.user", "ly6879")
+                .config("spark.datark.security.authorization.user", "wanghefeng")
+//                .config("spark.datark.security.authorization.user", "ly6879")
 //                .config("spark.datark.security.authorization.url", "http://127.0.0.1:8080")
-                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-dev.devops.91lyd.com")
+//                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-dev.devops.91lyd.com")
+                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.datark-test.sit.91lyd.com")
 //                .config("spark.datark.security.authorization.url", "http://datark-manage-pc.servyou-release.devops.91lyd.com")
                 // 调用open api的调用方的appcode
                 .config("spark.datark.security.authorization.appcode", "spark_sql")
@@ -187,7 +189,7 @@ object SparkHiveRemoteExample extends Logging {
 //        test30(spark)
 
 //        //测试31: 测试 行级别过滤
-        test31(spark)
+//        test31(spark)
 
         //测试32: 测试 字段和表混乱
 //        test32(spark)
@@ -216,6 +218,9 @@ object SparkHiveRemoteExample extends Logging {
         //测试40：读写paimon表测试
 //        test40(spark)
 
+
+        //测试41：查询视图无权限校验
+        test41(spark)
         spark.stop()
 
     }
@@ -1206,4 +1211,17 @@ object SparkHiveRemoteExample extends Logging {
               |  'write-only' = 'true')
               |""".stripMargin)
         }
+
+
+    def test41(spark: SparkSession) = {
+        //测试41：查询视图无权限校验
+        try {
+            spark.sql(
+                """CREATE TABLE IF NOT EXISTS zr_dev.0609test2_wsk_v_t STORED AS ORC TBLPROPERTIES ('orc.compress' = 'SNAPPY')
+                  |as SELECT * from zr_dev.0609test2_wsk_v; """.stripMargin)
+            Thread.sleep(2000)
+        } catch {
+            case e: Exception => e.printStackTrace()
+        }
+    }
 }

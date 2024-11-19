@@ -51,7 +51,7 @@ object Scans extends CommandSpecs[ScanSpec] {
   }
 
   val PermanentViewMarker = {
-    val r = "org.apache.kyuubi.plugin.spark.authz.rule.permanentview.PermanentViewMarker"
+    val r = "org.apache.kyuubia.plugin.spark.authz.rule.permanentview.PermanentViewMarker"
     val tableDesc =
       ScanDesc(
         "catalogTable",
