@@ -183,8 +183,20 @@ object SparkRangerAdminPlugin extends RangerBasePlugin("spark", "sparkSql")
       true
     } else {
       if (throwException) {
-        throw new AccessControlException(s"Permission denied: user [$userName] does not" +
-                s" have [${request.getAccessType}] privilege on [${DatarkSparkAuthentication.getAsString(request.getResource)}]")
+        val msg = s"Permission denied: user [$userName] does not" +
+                s" have [${request.getAccessType}] privilege on [${DatarkSparkAuthentication.getAsString(request.getResource)}]"
+        LOG.error(
+          s"""
+             |+===============================+
+             ||Spark SQL Authorization Failure|
+             ||-------------------------------|
+             ||${msg}
+             ||-------------------------------|
+             ||Spark SQL Authorization Failure|
+             |+===============================+
+               """.stripMargin)
+
+        throw new AccessControlException(msg)
       } else {
         false
       }

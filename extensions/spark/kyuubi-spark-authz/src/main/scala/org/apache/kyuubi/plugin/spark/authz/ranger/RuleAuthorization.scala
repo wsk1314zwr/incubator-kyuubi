@@ -18,6 +18,7 @@
 package org.apache.kyuubi.plugin.spark.authz.ranger
 
 import java.util.Locale
+import org.apache.commons.logging.LogFactory
 import scala.collection.mutable
 import org.apache.ranger.plugin.policyengine.RangerAccessRequest
 import org.apache.spark.sql.SparkSession
@@ -31,6 +32,9 @@ import org.apache.kyuubi.plugin.spark.authz.security.{DatarkSparkAccessRequest, 
 import org.apache.kyuubi.plugin.spark.authz.util.AuthZUtils._
 
 case class RuleAuthorization(spark: SparkSession) extends Authorization(spark) {
+
+    private val LOG = LogFactory.getLog(classOf[RuleAuthorization])
+
   override def checkPrivileges(spark: SparkSession, plan: LogicalPlan): Unit = {
     val auditHandler = new SparkRangerAuditHandler
     val ugi = getAuthzUgi(spark.sparkContext)
@@ -137,8 +141,20 @@ case class RuleAuthorization(spark: SparkSession) extends Authorization(spark) {
     requestArrays.flatten.foreach {request =>
       val allowed = DatarkSparkAuthentication.isAccessAllowed(request, true)
       if (!allowed && "true".equalsIgnoreCase(throwableException)) {
-        throw new AccessControlException(s"Permission denied: user [$userName] does not" +
-                s" have [${request.getAccessType}] privilege on [${DatarkSparkAuthentication.getAsString(request.getResource)}]")
+          val msg = s"Permission denied: user [$userName] does not" +
+                  s" have [${request.getAccessType}] privilege on [${DatarkSparkAuthentication.getAsString(request.getResource)}]"
+          LOG.error(
+              s"""
+                 |+===============================+
+                 ||Spark SQL Authorization Failure|
+                 ||-------------------------------|
+                 ||${msg}
+                 ||-------------------------------|
+                 ||Spark SQL Authorization Failure|
+                 |+===============================+
+               """.stripMargin)
+
+          throw new AccessControlException(msg)
       }
     }
   }
