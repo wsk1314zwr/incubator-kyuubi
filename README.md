@@ -144,3 +144,11 @@ The project took its name from a character of a popular Japanese manga - `Naruto
 The character is named `Kyuubi Kitsune/Kurama`, which is a nine-tailed fox in mythology.
 `Kyuubi` spread the power and spirit of fire, which is used here to represent the powerful [Apache Spark](http://spark.apache.org).
 Its nine tails stand for end-to-end multi-tenancy support of this project.
+
+## datark kyuubi权限插件打包
+kyuubi项目的kyuubi-spark-authz_2.12模块的编译步骤：
+* git地址: git@gitlab.dc.servyou-it.com:bdps/incubator-kyuubi.git
+* 切换分支: v1.10.0-authz-20241031是平台开发人员二开分支
+* 编译环境: 必须是jdk1.8 ,maven3.9.9 ,scala2.12  --若maven环境不是3.9.9版本，打包前会自动联网下载该版本的maven
+* 编译命令: build/mvn clean package -pl :kyuubi-spark-authz-shaded_2.12 -am -DskipTests  -Dmaven.test.skip=true -Pspark-3.4 -Dspark.version=3.4.3 -T8
+* 插件包位置: extensions/spark/kyuubi-spark-authz-shaded/target/kyuubi-spark-authz-shaded_2.12-1.10.0.jar
