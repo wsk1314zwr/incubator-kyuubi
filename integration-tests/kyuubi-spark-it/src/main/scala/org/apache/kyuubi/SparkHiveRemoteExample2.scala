@@ -71,7 +71,9 @@ object SparkHiveRemoteExample2 extends Logging {
         //测试9：读、写、创建paimon表测试
 //        test9(spark)
         //测试10：创建视图异常，出现类not found异常
-        test10(spark)
+//        test10(spark)
+        //测试11：读取视图未校验血缘问题排查
+        test11(spark)
         spark.stop()
 
     }
@@ -385,6 +387,56 @@ object SparkHiveRemoteExample2 extends Logging {
                   |  `modify_time`
                   |from
                   |  `zjl_test`.`api_base_0530_1`;
+                  |
+                  |
+                  |""".stripMargin)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => e.printStackTrace()
+
+        }
+    }
+
+    def test11(spark: SparkSession) = {
+        //测试11：读取视图未校验血缘问题排查
+        try {
+            spark.sql(
+                """
+                  |
+                  |insert
+                  |overwrite table zjl_test.kbc_re_yq_user_id_sample
+                  |select
+                  |distinct account_id,
+                  |'202020' pt_d
+                  |from
+                  |(
+                  |select
+                  |account_id
+                  |from
+                  |zjl_test.ads_mobile_consult_level_tag f
+                  |union all
+                  |select
+                  |e.account_id
+                  |from
+                  |(
+                  |select
+                  |mobile
+                  |from
+                  |zjl_test.ads_agent_mobile_relation_hb
+                  |union all
+                  |select
+                  |mobile
+                  |from
+                  |(
+                  |select
+                  |b.mobile
+                  |from
+                  |zjl_test.ads_company_consult_level_tag a
+                  |join zjl_test.ads_mobile_company_relation_base b on a.company_id = b.company_id
+                  |) c
+                  |) d
+                  |join zjl_test.ads_mobile_account_relation_base e on d.mobile = e.mobile
+                  |) g;
                   |
                   |
                   |""".stripMargin)
