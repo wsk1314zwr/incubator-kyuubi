@@ -218,9 +218,12 @@ object SparkHiveRemoteExample extends Logging {
         //测试40：读写paimon表测试
 //        test40(spark)
 
-
         //测试41：查询视图无权限校验
-        test41(spark)
+//        test41(spark)
+
+        //测试42：desc 3.1.2校验表use权限，而3.4.3校验所有字段的use权限定位以及优化
+        test42(spark)
+
         spark.stop()
 
     }
@@ -1224,4 +1227,20 @@ object SparkHiveRemoteExample extends Logging {
             case e: Exception => e.printStackTrace()
         }
     }
+
+    def test42(spark: SparkSession) = {
+        //测试42：desc 3.1.2校验表use权限，而3.4.3校验所有字段的use权限定位以及优化
+        try {
+            spark.sql(
+                """
+                  |
+                  |DESCRIBE table `hive_test`.`mx_fp_fpxxgjmx`;
+                  |
+                  |""".stripMargin).show(1000)
+            Thread.sleep(5000)
+        } catch {
+            case e: Exception => logError("发生异常", e)
+        }
+    }
+
 }
